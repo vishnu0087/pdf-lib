@@ -1,0 +1,2596 @@
+{
+  "format": "puppeteer-quote-pdf",
+  "formatVersion": 1,
+  "meta": {
+    "source": "data2.json (puppeteer-quote-pdf)",
+    "pagesIncluded": [
+      1,
+      2
+    ],
+    "scenario": "Commercial MEP quote — extended letter + multi-section BOQ"
+  },
+  "document": {
+    "pageSize": "A4",
+    "pageMarginsPt": {
+      "left": 24,
+      "top": 100,
+      "right": 32,
+      "bottom": 60
+    },
+    "pageMarginsMm": {
+      "left": 8.47,
+      "top": 35.28,
+      "right": 11.29,
+      "bottom": 21.17
+    },
+    "defaultStyle": {
+      "fontFamily": "Montserrat",
+      "fontSizePt": 10,
+      "color": "#333"
+    },
+    "styles": {
+      "header": {
+        "color": "#333",
+        "fontSizePt": 12,
+        "fontFamily": "Montserrat",
+        "bold": true,
+        "textAlign": "center"
+      },
+      "tableHeader": {
+        "color": "#333",
+        "fontSizePt": 10,
+        "fontFamily": "Montserrat",
+        "bold": true,
+        "fillColor": "#ffb74d",
+        "marginPt": [
+          0,
+          2,
+          0,
+          2
+        ]
+      }
+    },
+    "background": {
+      "imageRef": "pdf-background",
+      "widthPt": 595
+    },
+    "assets": {
+      "pdf-background": {
+        "path": "assests/pdf-background.png",
+        "urlPath": "/assests/pdf-background.png"
+      },
+      "not_approved": {
+        "path": "assests/not_approved.png",
+        "urlPath": "/assests/not_approved.png"
+      },
+      "not_approved_stamp": {
+        "path": "assests/not_approved_stamp.png",
+        "urlPath": "/assests/not_approved_stamp.png"
+      }
+    },
+    "pdfFontScale": 0.92
+  },
+  "page1": {
+    "pageBreakAfter": true,
+    "contentInsetPt": {
+      "left": 24,
+      "top": 110,
+      "right": 32,
+      "bottom": 72
+    },
+    "blocks": [
+      {
+        "id": "stamp_not_approved",
+        "type": "image",
+        "assetKey": "not_approved",
+        "style": {
+          "widthPt": 120,
+          "alignment": "center",
+          "position": "absolute",
+          "leftPt": -460,
+          "topPt": 0
+        }
+      },
+      {
+        "id": "title_quote",
+        "type": "text",
+        "text": "Quotation",
+        "style": {
+          "fontFamily": "Montserrat",
+          "fontSizePt": 16,
+          "fontWeight": "bold",
+          "color": "#444",
+          "textAlign": "center",
+          "marginPt": [
+            0,
+            10,
+            0,
+            10
+          ]
+        }
+      },
+      {
+        "id": "address_and_meta_row",
+        "type": "columns",
+        "columns": [
+          {
+            "id": "customer_address",
+            "width": "60%",
+            "type": "text",
+            "text": "Ms. Kavita Mehta (Projects)\nIndus Fab Pvt Ltd\nPlot 44-B, GIDC Vatva Phase-II, Nr. Old Narol Bridge\nAhmedabad, Gujarat 382445\nGSTIN: 24AABCI1234F1Z5\nPhone: +91 98250 44102\nEmail: projects@indusfab.example",
+            "style": {
+              "fontFamily": "Montserrat",
+              "fontSizePt": 10,
+              "fontWeight": "bold",
+              "color": "#333",
+              "textAlign": "left",
+              "marginPt": [
+                20,
+                20,
+                20,
+                20
+              ],
+              "whiteSpace": "pre-line"
+            }
+          },
+          {
+            "id": "quote_meta",
+            "width": "40%",
+            "type": "stack",
+            "marginPt": [
+              0,
+              20,
+              20,
+              20
+            ],
+            "items": [
+              {
+                "type": "text",
+                "text": "Quote AT-2026-0842 Rev B",
+                "style": {
+                  "fontFamily": "Montserrat",
+                  "fontSizePt": 12,
+                  "fontWeight": "bold",
+                  "color": "#333",
+                  "textAlign": "right",
+                  "marginPt": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              },
+              {
+                "type": "text",
+                "text": "15 April 2026",
+                "style": {
+                  "fontFamily": "Montserrat",
+                  "fontSizePt": 10,
+                  "fontWeight": "bold",
+                  "color": "#333",
+                  "textAlign": "right",
+                  "marginPt": [
+                    0,
+                    2,
+                    0,
+                    0
+                  ]
+                }
+              },
+              {
+                "type": "text",
+                "text": "Prepared by: Arjun Solanki",
+                "style": {
+                  "fontFamily": "Montserrat",
+                  "fontSizePt": 10,
+                  "fontWeight": "normal",
+                  "color": "#333",
+                  "textAlign": "right",
+                  "marginPt": [
+                    0,
+                    6,
+                    0,
+                    0
+                  ]
+                }
+              },
+              {
+                "type": "text",
+                "text": "Contact: +91 79 4000 8899",
+                "style": {
+                  "fontFamily": "Montserrat",
+                  "fontSizePt": 9,
+                  "fontWeight": "normal",
+                  "color": "#333",
+                  "textAlign": "right",
+                  "marginPt": [
+                    0,
+                    2,
+                    0,
+                    0
+                  ]
+                }
+              },
+              {
+                "type": "text",
+                "text": "UNDER TECHNICAL REVIEW",
+                "style": {
+                  "fontFamily": "Montserrat",
+                  "fontSizePt": 10,
+                  "fontWeight": "bold",
+                  "color": "#ffffff",
+                  "textAlign": "right",
+                  "backgroundColor": "#1565c0",
+                  "marginPt": [
+                    0,
+                    8,
+                    0,
+                    0
+                  ],
+                  "display": "inline-block"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "letter_body",
+        "type": "text",
+        "raw": "Dear Ms. Mehta,\n\nThank you for inviting AquaTech Projects to propose a turnkey water lifting and treatment package for Indus Fab Pvt Ltd’s new finishing line at GIDC Vatva, Ahmedabad. This quotation covers design-assist supply, factory staging checks, and supervised commissioning at your site.\n\nThe scope is aligned with your tender brief dated 28 March 2026: dual submersible duty with auto changeover, overhead tank level control, and potable-grade polishing for the wash bay loop. All rotating equipment listed carries OEM-backed warranty; consumables and site civil works are called out explicitly where excluded.\n\nHydraulic selections are based on the latest approved plumbing GA (Rev C) and the geotechnical summary for borewell RW-2. We have applied a combined simultaneity factor of 0.85 for pump duty and verified NPSH availability at the worst summer static level.\n\nElectrical scope includes IP65 outdoor panels, type-2 SPDs on incomers, and earth pits as per IS 3043. Cable sizing follows IS 732 with 2% max voltage drop at full load; harmonic filters are not included unless THD exceeds 8% during FAT.\n\nFiltration trains are sized for peak instantaneous flow of 8 m³/h with 20% margin. Backwash and rinse volumes are accounted in your UGT balance; if the civil sump volume changes, we will re-rate the pumps at no extra engineering fee before PO placement.\n\nInstrumentation covers suction and discharge pressure gauges, dry-run probes, and BMS dry contacts for fault and run status. Modbus TCP maps can be shared after advance payment clearance for PLC integration with your existing SCADA.\n\nDelivery is ex-Ahmedabad warehouse; foundation bolts and anti-vibration pads are in our scope. Crane or forklift for offloading, trenching, and masonry are under client scope unless the optional turnkey civil bundle is purchased.\n\nTesting includes 72-hour trial run with logged flow/head points, water quality sampling for TSS and residual chlorine, and handover dossier with O&M manuals, as-built P&ID, and preventive maintenance schedule.\n\nCommercially, prices are firm for 45 days from the date of this letter and are exclusive of statutory levies unless stated. GST is charged as applicable; reverse charge does not apply to this domestic supply.\n\nWe propose a milestone payment schedule matching your project cash flows; detailed percentages appear on page two. PBG and LD clauses can be aligned to your purchase order template subject to management approval.\n\nPlease confirm acceptance of technical deviations, if any, within ten working days so we can freeze long-lead items such as the multistage pump and FRP vessels. We remain available for a joint site review on short notice.\n\nSafety documentation will include method statements for electrical energisation, confined-space entry near sumps, and pressure testing of rising mains. Your EHS team may audit our procedures before work starts.\n\nSpares pricing in section C is indicative for the first year of operation; extended AMC packages are quoted separately on request. Critical wear parts are stocked locally in Ahmedabad for 48-hour dispatch.\n\nLiquidated damages, if any, will be capped at 5% of the contract value and apply only to delays attributable to our supply chain, excluding force majeure and client-caused delays.\n\nWe will submit shop drawings within two weeks of order confirmation and seek your approval before releasing fabrication for custom panels and FRP vessels.\n\nAny variation in scope, site conditions, or statutory requirements after PO acceptance will be handled through a formal change order with time and cost impact.\n\nWe appreciate your trust and look forward to supporting Indus Fab with reliable, efficient water infrastructure.\n\nYours sincerely,\n\nAquaTech Projects — Sales Engineering",
+        "paragraphs": [
+          "Dear Ms. Mehta,",
+          "Thank you for inviting AquaTech Projects to propose a turnkey water lifting and treatment package for Indus Fab Pvt Ltd’s new finishing line at GIDC Vatva, Ahmedabad. This quotation covers design-assist supply, factory staging checks, and supervised commissioning at your site.",
+          "The scope is aligned with your tender brief dated 28 March 2026: dual submersible duty with auto changeover, overhead tank level control, and potable-grade polishing for the wash bay loop. All rotating equipment listed carries OEM-backed warranty; consumables and site civil works are called out explicitly where excluded.",
+          "Hydraulic selections are based on the latest approved plumbing GA (Rev C) and the geotechnical summary for borewell RW-2. We have applied a combined simultaneity factor of 0.85 for pump duty and verified NPSH availability at the worst summer static level.",
+          "Electrical scope includes IP65 outdoor panels, type-2 SPDs on incomers, and earth pits as per IS 3043. Cable sizing follows IS 732 with 2% max voltage drop at full load; harmonic filters are not included unless THD exceeds 8% during FAT.",
+          "Filtration trains are sized for peak instantaneous flow of 8 m³/h with 20% margin. Backwash and rinse volumes are accounted in your UGT balance; if the civil sump volume changes, we will re-rate the pumps at no extra engineering fee before PO placement.",
+          "Instrumentation covers suction and discharge pressure gauges, dry-run probes, and BMS dry contacts for fault and run status. Modbus TCP maps can be shared after advance payment clearance for PLC integration with your existing SCADA.",
+          "Delivery is ex-Ahmedabad warehouse; foundation bolts and anti-vibration pads are in our scope. Crane or forklift for offloading, trenching, and masonry are under client scope unless the optional turnkey civil bundle is purchased.",
+          "Testing includes 72-hour trial run with logged flow/head points, water quality sampling for TSS and residual chlorine, and handover dossier with O&M manuals, as-built P&ID, and preventive maintenance schedule.",
+          "Commercially, prices are firm for 45 days from the date of this letter and are exclusive of statutory levies unless stated. GST is charged as applicable; reverse charge does not apply to this domestic supply.",
+          "We propose a milestone payment schedule matching your project cash flows; detailed percentages appear on page two. PBG and LD clauses can be aligned to your purchase order template subject to management approval.",
+          "Please confirm acceptance of technical deviations, if any, within ten working days so we can freeze long-lead items such as the multistage pump and FRP vessels. We remain available for a joint site review on short notice.",
+          "Safety documentation will include method statements for electrical energisation, confined-space entry near sumps, and pressure testing of rising mains. Your EHS team may audit our procedures before work starts.",
+          "Spares pricing in section C is indicative for the first year of operation; extended AMC packages are quoted separately on request. Critical wear parts are stocked locally in Ahmedabad for 48-hour dispatch.",
+          "Liquidated damages, if any, will be capped at 5% of the contract value and apply only to delays attributable to our supply chain, excluding force majeure and client-caused delays.",
+          "We will submit shop drawings within two weeks of order confirmation and seek your approval before releasing fabrication for custom panels and FRP vessels.",
+          "Any variation in scope, site conditions, or statutory requirements after PO acceptance will be handled through a formal change order with time and cost impact.",
+          "We appreciate your trust and look forward to supporting Indus Fab with reliable, efficient water infrastructure.",
+          "Yours sincerely,",
+          "AquaTech Projects — Sales Engineering"
+        ],
+        "style": {
+          "inheritsDefault": true,
+          "fontFamily": "Montserrat",
+          "fontSizePt": 10,
+          "fontWeight": "normal",
+          "color": "#333",
+          "textAlign": "left",
+          "marginPt": [
+            20,
+            10,
+            28,
+            10
+          ],
+          "lineHeight": 1.15,
+          "paragraphGap": "1em",
+          "whiteSpace": "pre-line"
+        }
+      }
+    ]
+  },
+  "page2": {
+    "enabled": true,
+    "fontScale": 1,
+    "contentInsetPt": {
+      "left": 24,
+      "top": 110,
+      "right": 32,
+      "bottom": 72
+    },
+    "tableBody": [
+      [
+        {
+          "text": "Sr. No",
+          "style": "tableHeader",
+          "alignment": "center"
+        },
+        {
+          "text": "Image",
+          "style": "tableHeader",
+          "alignment": "center"
+        },
+        {
+          "text": "Product Name",
+          "style": "tableHeader",
+          "alignment": "center"
+        },
+        {
+          "text": "HSN\nGST %",
+          "style": "tableHeader",
+          "alignment": "center"
+        },
+        {
+          "text": "Price",
+          "style": "tableHeader",
+          "alignment": "center"
+        },
+        {
+          "text": "Qty.",
+          "style": "tableHeader",
+          "alignment": "center"
+        },
+        {
+          "text": "Disc.",
+          "style": "tableHeader",
+          "alignment": "center"
+        },
+        {
+          "text": "Total",
+          "style": "tableHeader",
+          "alignment": "center"
+        }
+      ],
+      [
+        {
+          "text": "",
+          "colSpan": 8
+        },
+        [
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          }
+        ]
+      ],
+      [
+        {
+          "text": "A — Borewell to overhead pumping",
+          "alignment": "center",
+          "margin": [
+            0,
+            5,
+            0,
+            5
+          ],
+          "bold": true,
+          "color": "#333",
+          "fillColor": "#eee",
+          "fontSize": 12,
+          "font": "Montserrat",
+          "colSpan": 8
+        },
+        [
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          }
+        ]
+      ],
+      [
+        {
+          "text": "1.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "AL-310 V4 Submersible Pump",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "Make: HydroMax | HP: 1.0 | Head: 38 m | Cable: 35 m",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "84137010\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹28,900/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "2 Nos.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "5%",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹54,910/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "2.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "SS Vertical Multistage Pump",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "Make: Grundfos clone series | 3 ph | 2 HP | SS impeller",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "84137020\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹62,000/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "1 No.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹62,000/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "3.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "Automatic Pump Controller Panel",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "Dry-run protection, cyclic timer, float + pressure switch inputs",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "85371000\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹18,750/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "1 No.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹18,750/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "4.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "HDPE Rising Main (Schedule 80)",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "OD 63 mm × 80 m coil, ISI marked, pressure rated",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "39172100\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹14,200/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "1 Lot",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹14,200/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "5.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "GI Foot Valve with Strainer",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "3\" threaded, epoxy coated, heavy duty",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "84818030\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹4,850/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "1 No.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹4,850/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "",
+          "colSpan": 8
+        },
+        [
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          }
+        ]
+      ],
+      [
+        {
+          "text": "B — Filtration, disinfection & accessories",
+          "alignment": "center",
+          "margin": [
+            0,
+            5,
+            0,
+            5
+          ],
+          "bold": true,
+          "color": "#333",
+          "fillColor": "#eee",
+          "fontSize": 12,
+          "font": "Montserrat",
+          "colSpan": 8
+        },
+        [
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          }
+        ]
+      ],
+      [
+        {
+          "text": "6.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "Sand Media Filter Vessel",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "24\" FRP, multiport valve, 50 kg high-grade media included",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "84212120\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹36,400/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "1 No.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "8%",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹67,056/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "7.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "Activated Carbon Filter",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "20\" BB housing, CTO + GAC cartridges (annual kit)",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "84212120\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹9,600/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "2 Sets",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹19,200/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "8.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "UV Sterilizer 12 GPM",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "SS 304 chamber, Philips lamp, hour meter, failure alarm",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "85437099\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹22,100/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "1 No.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹22,100/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "9.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "Dosing Pump (Chlorination)",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "Electronic stroke control, 0–10 LPH, wall mount kit",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "84132000\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹11,400/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "1 No.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹11,400/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "",
+          "colSpan": 8
+        },
+        [
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          }
+        ]
+      ],
+      [
+        {
+          "text": "C — Electrical panels, valves & instrumentation",
+          "alignment": "center",
+          "margin": [
+            0,
+            5,
+            0,
+            5
+          ],
+          "bold": true,
+          "color": "#333",
+          "fillColor": "#eee",
+          "fontSize": 12,
+          "font": "Montserrat",
+          "colSpan": 8
+        },
+        [
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          }
+        ]
+      ],
+      [
+        {
+          "text": "10.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "Motor Control Centre (Outdoor)",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "415 V, 100 A incomer, VFD for submersible, interlocks per I/O schedule",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "85372000\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹48,500/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "1 No.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹48,500/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "11.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "Pressure Transmitter 0–10 bar",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "4–20 mA, flush diaphragm, SS 316 wetted parts, calibration cert",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "90262000\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹6,200/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "3 Nos.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹18,600/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "12.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "Electromagnetic Flow Meter DN50",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "Battery + mains, data logger 90 days, RS-485",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "90261000\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹19,800/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "1 No.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹19,800/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "13.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "Butterfly Valves & Non-return Set",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "EPDM seat, lug type, lever operator — matching line sizes",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "84818000\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹8,400/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "6 Nos.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹50,400/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "14.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "Spare Kit (Mechanical Seal + O-rings)",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "One-year recommended spares for listed pumps",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "40169390\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹7,250/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "1 Kit",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹7,250/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "15.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "Earthing Kit & Surge Protection",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "Copper bonded rods, inspection pit, lightning counter",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "85363000\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹14,100/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "1 Lot",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹14,100/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ]
+    ],
+    "afterTable": [
+      {
+        "table": {
+          "widths": [
+            "*",
+            "auto"
+          ],
+          "body": [
+            [
+              "",
+              {
+                "table": {
+                  "widths": [
+                    "auto",
+                    "auto"
+                  ],
+                  "body": [
+                    [
+                      {
+                        "text": "Subtotal (excl. GST)",
+                        "font": "Montserrat",
+                        "fontSize": 10,
+                        "alignment": "left"
+                      },
+                      {
+                        "text": "₹4,33,116/-",
+                        "font": "Montserrat",
+                        "fontSize": 10,
+                        "alignment": "center"
+                      }
+                    ],
+                    [
+                      {
+                        "text": "Freight & packing (Ahmedabad)",
+                        "font": "Montserrat",
+                        "fontSize": 10,
+                        "alignment": "left"
+                      },
+                      {
+                        "text": "₹12,000/-",
+                        "font": "Montserrat",
+                        "fontSize": 10,
+                        "alignment": "center"
+                      }
+                    ],
+                    [
+                      {
+                        "text": "Net taxable value",
+                        "bold": true,
+                        "font": "Montserrat",
+                        "fontSize": 10,
+                        "alignment": "left"
+                      },
+                      {
+                        "text": "₹4,45,116/-",
+                        "bold": true,
+                        "font": "Montserrat",
+                        "fontSize": 10,
+                        "alignment": "center"
+                      }
+                    ],
+                    [
+                      {
+                        "text": "GST (blended 18%)",
+                        "font": "Montserrat",
+                        "fontSize": 10,
+                        "alignment": "left"
+                      },
+                      {
+                        "text": "₹80,121/-",
+                        "font": "Montserrat",
+                        "fontSize": 10,
+                        "alignment": "center"
+                      }
+                    ],
+                    [
+                      {
+                        "text": "Grand total (INR)",
+                        "bold": true,
+                        "font": "Montserrat",
+                        "fontSize": 12,
+                        "alignment": "left"
+                      },
+                      {
+                        "text": "₹5,25,237/-",
+                        "bold": true,
+                        "font": "Montserrat",
+                        "fontSize": 12,
+                        "alignment": "center"
+                      }
+                    ]
+                  ]
+                },
+                "layout": "lightHorizontalLines"
+              }
+            ]
+          ]
+        },
+        "layout": "noBorders",
+        "margin": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "text": "Optional site services (not in total above)",
+        "fontSize": 10,
+        "font": "Montserrat",
+        "bold": true,
+        "color": "#444",
+        "alignment": "right",
+        "background": "#ddd",
+        "margin": [
+          0,
+          8,
+          0,
+          0
+        ]
+      },
+      {
+        "stack": [
+          {
+            "text": [
+              {
+                "text": "Delivery & site coordination",
+                "bold": true,
+                "decoration": "underline"
+              }
+            ],
+            "fontSize": 10,
+            "margin": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "font": "Montserrat"
+          },
+          {
+            "ul": [
+              {
+                "text": "Material releases in two lots: pumps and panels first, filtration skid second — aligned to your civil readiness dates.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Site storage: lockable room with power for panel conditioning; humidity-controlled area requested for UV lamps until energisation.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Commissioning window: 5 working days after wet conditions; 24-hour standby for first week of trial production.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Third-party lab tests for potable parameters can be arranged at actuals if specified in your purchase order.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Training: two sessions (operators + maintenance) of 3 hours each, max 8 attendees per session.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Lift-and-shift of skids from unloading bay to mezzanine is excluded unless a separate work order is issued with structural approval.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Dewatering of sumps during installation is client scope; we provide only method guidance and portable pump specifications.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Any road permit or police escort for odd-hour movement of long HDPE coils will be arranged by the client with our coordination.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Insurance during transit is covered under our standard inland policy; additional project-specific CAR/EAR can be quoted separately.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "As-built AutoCAD/PDF drawings and O&M manuals will be supplied in English; Gujarati or Hindi summaries can be added on request.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              }
+            ],
+            "fontSize": 10,
+            "marginBottom": 0,
+            "font": "Montserrat"
+          }
+        ],
+        "margin": [
+          20,
+          10,
+          28,
+          10
+        ]
+      },
+      {
+        "stack": [
+          {
+            "text": [
+              {
+                "text": "Site readiness & HSE (client scope)",
+                "bold": true,
+                "decoration": "underline"
+              }
+            ],
+            "fontSize": 10,
+            "margin": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "font": "Montserrat"
+          },
+          {
+            "ol": [
+              {
+                "text": "Dedicated electrical room with IP2X compliance, rodent protection, and exhaust as per load loss calculations shared in Annex A.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Earthing pit resistance certificate (< 1 Ω) from a NABL lab before panel energisation.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Adequate natural lighting or temporary LED work lights for wet-area commissioning.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "First-aid kit, fire extinguisher (CO2 + dry powder), and eyewash station within 15 m of chemical dosing area.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Barricading of open trenches and sumps with signage in Gujarati and English.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Potable water sample point for baseline TDS/chlorine tests before equipment startup.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Internet uplink or offline storage for data logger download from flow meters.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Nominated single point of contact (SPOC) with authority to sign daily job cards.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Hot-work and confined-space permits as per your factory safety manual.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Laydown area min 120 m² with compacted PCC and edge protection for skid staging.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Drain connection for filter backwash with oil trap upstream of municipal discharge.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Final walk-through with your maintenance head before SAT sign-off.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              }
+            ],
+            "fontSize": 10,
+            "marginBottom": 0,
+            "font": "Montserrat"
+          }
+        ],
+        "margin": [
+          20,
+          10,
+          28,
+          10
+        ]
+      },
+      {
+        "stack": [
+          {
+            "text": [
+              {
+                "text": "Payment schedule (indicative)",
+                "bold": true,
+                "decoration": "underline"
+              }
+            ],
+            "fontSize": 10,
+            "margin": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "font": "Montserrat",
+            "alignment": "left"
+          },
+          {
+            "ul": [
+              {
+                "text": "40% with technically and commercially cleared purchase order.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "40% against readiness notice before dispatch from our warehouse.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "20% within 7 days of successful commissioning and handover certificate.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              }
+            ],
+            "fontSize": 10,
+            "marginBottom": 0,
+            "font": "Montserrat"
+          }
+        ],
+        "margin": [
+          20,
+          10,
+          28,
+          10
+        ]
+      },
+      {
+        "columnGap": 12,
+        "columns": [
+          {
+            "width": "*",
+            "stack": [
+              {
+                "text": "Bank details (AquaTech Projects)",
+                "fontSize": 10,
+                "font": "Montserrat",
+                "bold": true,
+                "color": "#444",
+                "alignment": "left",
+                "margin": [
+                  20,
+                  15,
+                  0,
+                  0
+                ],
+                "decoration": "underline"
+              },
+              {
+                "table": {
+                  "headerRows": 0,
+                  "widths": "auto",
+                  "body": [
+                    [
+                      {
+                        "text": "Account name",
+                        "fontSize": 9,
+                        "font": "Montserrat",
+                        "color": "#444"
+                      },
+                      {
+                        "text": "AquaTech Projects Pvt Ltd",
+                        "fontSize": 10,
+                        "font": "Montserrat",
+                        "bold": true,
+                        "color": "#444"
+                      }
+                    ],
+                    [
+                      {
+                        "text": "Account number",
+                        "fontSize": 9,
+                        "font": "Montserrat",
+                        "color": "#444"
+                      },
+                      {
+                        "text": "5020007788990011",
+                        "fontSize": 10,
+                        "font": "Montserrat",
+                        "bold": true,
+                        "color": "#444"
+                      }
+                    ],
+                    [
+                      {
+                        "text": "Bank / branch",
+                        "fontSize": 9,
+                        "font": "Montserrat",
+                        "color": "#444"
+                      },
+                      {
+                        "text": "HDFC Bank — Ashram Road, Ahmedabad",
+                        "fontSize": 10,
+                        "font": "Montserrat",
+                        "bold": true,
+                        "color": "#444"
+                      }
+                    ],
+                    [
+                      {
+                        "text": "IFSC",
+                        "fontSize": 9,
+                        "font": "Montserrat",
+                        "color": "#444"
+                      },
+                      {
+                        "text": "HDFC0001234",
+                        "fontSize": 10,
+                        "font": "Montserrat",
+                        "bold": true,
+                        "color": "#444"
+                      }
+                    ],
+                    [
+                      {
+                        "text": "GSTIN",
+                        "fontSize": 9,
+                        "font": "Montserrat",
+                        "color": "#444"
+                      },
+                      {
+                        "text": "24AACCA1234E1Z8",
+                        "fontSize": 10,
+                        "font": "Montserrat",
+                        "bold": true,
+                        "color": "#444"
+                      }
+                    ]
+                  ]
+                },
+                "margin": [
+                  20,
+                  0,
+                  0,
+                  10
+                ],
+                "layout": {}
+              }
+            ]
+          },
+          {
+            "width": "auto",
+            "stack": [
+              {
+                "image": "/assests/not_approved_stamp.png",
+                "fit": [
+                  100,
+                  100
+                ],
+                "alignment": "center",
+                "margin": [
+                  0,
+                  15,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        ],
+        "margin": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    ]
+  }
+}

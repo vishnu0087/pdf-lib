@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build:pdf-css": "node ./pdf-react/build-print-css.mjs",
+    "build:pdf-css": "node ./pdf/build-print-css.mjs",
     "prestart": "npm run build:pdf-css",
     "start": "node --import tsx server.js"
   },

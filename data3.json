@@ -1,0 +1,952 @@
+{
+  "format": "puppeteer-quote-pdf",
+  "formatVersion": 1,
+  "meta": {
+    "source": "data3.json (puppeteer-quote-pdf)",
+    "pagesIncluded": [
+      1,
+      2
+    ],
+    "scenario": "Compact estimate — school AV & furniture (pagination test)"
+  },
+  "document": {
+    "pageSize": "A4",
+    "pageMarginsPt": {
+      "left": 24,
+      "top": 100,
+      "right": 32,
+      "bottom": 60
+    },
+    "pageMarginsMm": {
+      "left": 8.47,
+      "top": 35.28,
+      "right": 11.29,
+      "bottom": 21.17
+    },
+    "defaultStyle": {
+      "fontFamily": "Montserrat",
+      "fontSizePt": 10,
+      "color": "#333"
+    },
+    "styles": {
+      "header": {
+        "color": "#333",
+        "fontSizePt": 12,
+        "fontFamily": "Montserrat",
+        "bold": true,
+        "textAlign": "center"
+      },
+      "tableHeader": {
+        "color": "#333",
+        "fontSizePt": 10,
+        "fontFamily": "Montserrat",
+        "bold": true,
+        "fillColor": "#ffb74d",
+        "marginPt": [
+          0,
+          2,
+          0,
+          2
+        ]
+      }
+    },
+    "background": {
+      "imageRef": "pdf-background",
+      "widthPt": 595
+    },
+    "assets": {
+      "pdf-background": {
+        "path": "assests/pdf-background.png",
+        "urlPath": "/assests/pdf-background.png"
+      },
+      "not_approved": {
+        "path": "assests/not_approved.png",
+        "urlPath": "/assests/not_approved.png"
+      },
+      "not_approved_stamp": {
+        "path": "assests/not_approved_stamp.png",
+        "urlPath": "/assests/not_approved_stamp.png"
+      }
+    },
+    "pdfFontScale": 0.92
+  },
+  "page1": {
+    "pageBreakAfter": true,
+    "contentInsetPt": {
+      "left": 24,
+      "top": 110,
+      "right": 32,
+      "bottom": 72
+    },
+    "blocks": [
+      {
+        "id": "stamp_not_approved",
+        "type": "image",
+        "assetKey": "not_approved",
+        "style": {
+          "widthPt": 120,
+          "alignment": "center",
+          "position": "absolute",
+          "leftPt": -460,
+          "topPt": 0
+        }
+      },
+      {
+        "id": "title_quote",
+        "type": "text",
+        "text": "Estimate",
+        "style": {
+          "fontFamily": "Montserrat",
+          "fontSizePt": 16,
+          "fontWeight": "bold",
+          "color": "#444",
+          "textAlign": "center",
+          "marginPt": [
+            0,
+            10,
+            0,
+            10
+          ]
+        }
+      },
+      {
+        "id": "address_and_meta_row",
+        "type": "columns",
+        "columns": [
+          {
+            "id": "customer_address",
+            "width": "60%",
+            "type": "text",
+            "text": "St. Mary’s Higher Secondary School\nAttn: Fr. Thomas Kurian (Bursar)\nRing Road, Kottayam, Kerala 686001\nPhone: +91 481 256 8890\nEmail: accounts@stmarys-kty.edu.in",
+            "style": {
+              "fontFamily": "Montserrat",
+              "fontSizePt": 10,
+              "fontWeight": "bold",
+              "color": "#333",
+              "textAlign": "left",
+              "marginPt": [
+                20,
+                20,
+                20,
+                20
+              ],
+              "whiteSpace": "pre-line"
+            }
+          },
+          {
+            "id": "quote_meta",
+            "width": "40%",
+            "type": "stack",
+            "marginPt": [
+              0,
+              20,
+              20,
+              20
+            ],
+            "items": [
+              {
+                "type": "text",
+                "text": "EST-KTY-2026-0415",
+                "style": {
+                  "fontFamily": "Montserrat",
+                  "fontSizePt": 12,
+                  "fontWeight": "bold",
+                  "color": "#333",
+                  "textAlign": "right",
+                  "marginPt": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              },
+              {
+                "type": "text",
+                "text": "12 April 2026",
+                "style": {
+                  "fontFamily": "Montserrat",
+                  "fontSizePt": 10,
+                  "fontWeight": "bold",
+                  "color": "#333",
+                  "textAlign": "right",
+                  "marginPt": [
+                    0,
+                    2,
+                    0,
+                    0
+                  ]
+                }
+              },
+              {
+                "type": "text",
+                "text": "Prepared by: Sneha Nambiar",
+                "style": {
+                  "fontFamily": "Montserrat",
+                  "fontSizePt": 10,
+                  "fontWeight": "normal",
+                  "color": "#333",
+                  "textAlign": "right",
+                  "marginPt": [
+                    0,
+                    6,
+                    0,
+                    0
+                  ]
+                }
+              },
+              {
+                "type": "text",
+                "text": "Contact: +91 94955 10203",
+                "style": {
+                  "fontFamily": "Montserrat",
+                  "fontSizePt": 9,
+                  "fontWeight": "normal",
+                  "color": "#333",
+                  "textAlign": "right",
+                  "marginPt": [
+                    0,
+                    2,
+                    0,
+                    0
+                  ]
+                }
+              },
+              {
+                "type": "text",
+                "text": "DRAFT — FOR DISCUSSION",
+                "style": {
+                  "fontFamily": "Montserrat",
+                  "fontSizePt": 10,
+                  "fontWeight": "bold",
+                  "color": "#ffffff",
+                  "textAlign": "right",
+                  "backgroundColor": "#2e7d32",
+                  "marginPt": [
+                    0,
+                    8,
+                    0,
+                    0
+                  ],
+                  "display": "inline-block"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "letter_body",
+        "type": "text",
+        "raw": "Dear Fr. Kurian,\n\nBrightLine Interiors has pleasure in submitting this estimate for the smart-classroom refresh discussed during your site visit on 5 April 2026. The figures cover supply of interactive display hardware and fixed seating for Lab B only; electrical point upgrades remain with your nominated contractor.\n\nPricing is valid for thirty days. We can align installation with the summer break window you indicated (first two weeks of May). Please reply with any quantity changes so we can revise before the board meeting.\n\nYours faithfully,\nBrightLine Interiors — Projects",
+        "paragraphs": [
+          "Dear Fr. Kurian,",
+          "BrightLine Interiors has pleasure in submitting this estimate for the smart-classroom refresh discussed during your site visit on 5 April 2026. The figures cover supply of interactive display hardware and fixed seating for Lab B only; electrical point upgrades remain with your nominated contractor.",
+          "Pricing is valid for thirty days. We can align installation with the summer break window you indicated (first two weeks of May). Please reply with any quantity changes so we can revise before the board meeting.",
+          "Yours faithfully,",
+          "BrightLine Interiors — Projects"
+        ],
+        "style": {
+          "inheritsDefault": true,
+          "fontFamily": "Montserrat",
+          "fontSizePt": 10,
+          "fontWeight": "normal",
+          "color": "#333",
+          "textAlign": "left",
+          "marginPt": [
+            20,
+            10,
+            28,
+            10
+          ],
+          "lineHeight": 1.15,
+          "paragraphGap": "1em",
+          "whiteSpace": "pre-line"
+        }
+      }
+    ]
+  },
+  "page2": {
+    "enabled": true,
+    "fontScale": 1,
+    "contentInsetPt": {
+      "left": 24,
+      "top": 110,
+      "right": 32,
+      "bottom": 72
+    },
+    "tableBody": [
+      [
+        {
+          "text": "Sr. No",
+          "style": "tableHeader",
+          "alignment": "center"
+        },
+        {
+          "text": "Image",
+          "style": "tableHeader",
+          "alignment": "center"
+        },
+        {
+          "text": "Product Name",
+          "style": "tableHeader",
+          "alignment": "center"
+        },
+        {
+          "text": "HSN\nGST %",
+          "style": "tableHeader",
+          "alignment": "center"
+        },
+        {
+          "text": "Price",
+          "style": "tableHeader",
+          "alignment": "center"
+        },
+        {
+          "text": "Qty.",
+          "style": "tableHeader",
+          "alignment": "center"
+        },
+        {
+          "text": "Disc.",
+          "style": "tableHeader",
+          "alignment": "center"
+        },
+        {
+          "text": "Total",
+          "style": "tableHeader",
+          "alignment": "center"
+        }
+      ],
+      [
+        {
+          "text": "",
+          "colSpan": 8
+        },
+        [
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          }
+        ]
+      ],
+      [
+        {
+          "text": "Lab B — Display & seating",
+          "alignment": "center",
+          "margin": [
+            0,
+            5,
+            0,
+            5
+          ],
+          "bold": true,
+          "color": "#333",
+          "fillColor": "#eee",
+          "fontSize": 12,
+          "font": "Montserrat",
+          "colSpan": 8
+        },
+        [
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          }
+        ]
+      ],
+      [
+        {
+          "text": "1.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "86\" 4K Interactive Flat Panel",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "Android 13 OPS slot, 20-point touch, wall bracket included",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(24 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "85287215\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹1,85,000/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "1 No.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹1,85,000/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "2.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "left",
+          "bold": true
+        },
+        {
+          "text": "",
+          "alignment": "center"
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "stack": [
+                    {
+                      "stack": [
+                        {
+                          "text": [
+                            {
+                              "text": "Fixed Lecture Bench (2-seater)",
+                              "bold": true,
+                              "font": "Montserrat"
+                            }
+                          ],
+                          "fontSize": 12,
+                          "bold": false,
+                          "marginBottom": 2,
+                          "font": "Montserrat"
+                        },
+                        {
+                          "text": "Laminate top, MS frame, floor bolts — graphite finish",
+                          "fontSize": 10,
+                          "margin": [
+                            0,
+                            0,
+                            0,
+                            1
+                          ],
+                          "font": "Montserrat"
+                        }
+                      ],
+                      "alignment": "left"
+                    },
+                    {
+                      "text": "(12 Months Warranty)",
+                      "color": "#333",
+                      "fontSize": 9,
+                      "font": "Montserrat",
+                      "bold": false,
+                      "alignment": "left"
+                    }
+                  ],
+                  "alignment": "left"
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "alignment": "left"
+        },
+        {
+          "text": "94036000\n18% GST",
+          "fontSize": 9,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹14,200/-",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "18 Nos.",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "6%",
+          "fontSize": 10,
+          "font": "Montserrat",
+          "alignment": "center"
+        },
+        {
+          "text": "₹2,40,264/-",
+          "bold": true,
+          "fontSize": 10,
+          "font": "Montserrat",
+          "color": "#333",
+          "alignment": "center",
+          "background": "#ffb74d"
+        }
+      ],
+      [
+        {
+          "text": "",
+          "colSpan": 8
+        },
+        [
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          }
+        ]
+      ]
+    ],
+    "afterTable": [
+      {
+        "table": {
+          "widths": [
+            "*",
+            "auto"
+          ],
+          "body": [
+            [
+              "",
+              {
+                "table": {
+                  "widths": [
+                    "auto",
+                    "auto"
+                  ],
+                  "body": [
+                    [
+                      {
+                        "text": "Taxable value",
+                        "font": "Montserrat",
+                        "fontSize": 10,
+                        "alignment": "left"
+                      },
+                      {
+                        "text": "₹4,25,264/-",
+                        "font": "Montserrat",
+                        "fontSize": 10,
+                        "alignment": "center"
+                      }
+                    ],
+                    [
+                      {
+                        "text": "GST (18%)",
+                        "font": "Montserrat",
+                        "fontSize": 10,
+                        "alignment": "left"
+                      },
+                      {
+                        "text": "₹76,548/-",
+                        "font": "Montserrat",
+                        "fontSize": 10,
+                        "alignment": "center"
+                      }
+                    ],
+                    [
+                      {
+                        "text": "Grand total (INR)",
+                        "bold": true,
+                        "font": "Montserrat",
+                        "fontSize": 12,
+                        "alignment": "left"
+                      },
+                      {
+                        "text": "₹5,01,812/-",
+                        "bold": true,
+                        "font": "Montserrat",
+                        "fontSize": 12,
+                        "alignment": "center"
+                      }
+                    ]
+                  ]
+                },
+                "layout": "lightHorizontalLines"
+              }
+            ]
+          ]
+        },
+        "layout": "noBorders",
+        "margin": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "text": "Notes",
+        "fontSize": 10,
+        "font": "Montserrat",
+        "bold": true,
+        "color": "#444",
+        "alignment": "right",
+        "background": "#ddd",
+        "margin": [
+          0,
+          8,
+          0,
+          0
+        ]
+      },
+      {
+        "stack": [
+          {
+            "text": [
+              {
+                "text": "Delivery",
+                "bold": true,
+                "decoration": "underline"
+              }
+            ],
+            "fontSize": 10,
+            "margin": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "font": "Montserrat"
+          },
+          {
+            "ul": [
+              {
+                "text": "Ex-warehouse Kochi; unloading at school gate is included.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              },
+              {
+                "text": "Panel goes up only after your civil team confirms wall load (RCC or reinforced ply backing).",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              }
+            ],
+            "fontSize": 10,
+            "marginBottom": 0,
+            "font": "Montserrat"
+          }
+        ],
+        "margin": [
+          20,
+          10,
+          28,
+          10
+        ]
+      },
+      {
+        "stack": [
+          {
+            "text": [
+              {
+                "text": "Payment",
+                "bold": true,
+                "decoration": "underline"
+              }
+            ],
+            "fontSize": 10,
+            "margin": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "font": "Montserrat",
+            "alignment": "left"
+          },
+          {
+            "ul": [
+              {
+                "text": "60% on purchase order, 40% after installation sign-off.",
+                "fontSize": 10,
+                "marginLeft": 5,
+                "font": "Montserrat"
+              }
+            ],
+            "fontSize": 10,
+            "marginBottom": 0,
+            "font": "Montserrat"
+          }
+        ],
+        "margin": [
+          20,
+          10,
+          28,
+          10
+        ]
+      },
+      {
+        "columnGap": 12,
+        "columns": [
+          {
+            "width": "*",
+            "stack": [
+              {
+                "text": "Bank details (BrightLine Interiors)",
+                "fontSize": 10,
+                "font": "Montserrat",
+                "bold": true,
+                "color": "#444",
+                "alignment": "left",
+                "margin": [
+                  20,
+                  15,
+                  0,
+                  0
+                ],
+                "decoration": "underline"
+              },
+              {
+                "table": {
+                  "headerRows": 0,
+                  "widths": "auto",
+                  "body": [
+                    [
+                      {
+                        "text": "Account name",
+                        "fontSize": 9,
+                        "font": "Montserrat",
+                        "color": "#444"
+                      },
+                      {
+                        "text": "BrightLine Interiors LLP",
+                        "fontSize": 10,
+                        "font": "Montserrat",
+                        "bold": true,
+                        "color": "#444"
+                      }
+                    ],
+                    [
+                      {
+                        "text": "Account number",
+                        "fontSize": 9,
+                        "font": "Montserrat",
+                        "color": "#444"
+                      },
+                      {
+                        "text": "318902567891",
+                        "fontSize": 10,
+                        "font": "Montserrat",
+                        "bold": true,
+                        "color": "#444"
+                      }
+                    ],
+                    [
+                      {
+                        "text": "Bank / branch",
+                        "fontSize": 9,
+                        "font": "Montserrat",
+                        "color": "#444"
+                      },
+                      {
+                        "text": "Federal Bank — Baker Junction, Kottayam",
+                        "fontSize": 10,
+                        "font": "Montserrat",
+                        "bold": true,
+                        "color": "#444"
+                      }
+                    ],
+                    [
+                      {
+                        "text": "IFSC",
+                        "fontSize": 9,
+                        "font": "Montserrat",
+                        "color": "#444"
+                      },
+                      {
+                        "text": "FDRL0003189",
+                        "fontSize": 10,
+                        "font": "Montserrat",
+                        "bold": true,
+                        "color": "#444"
+                      }
+                    ],
+                    [
+                      {
+                        "text": "GSTIN",
+                        "fontSize": 9,
+                        "font": "Montserrat",
+                        "color": "#444"
+                      },
+                      {
+                        "text": "32AABCB8899L1ZV",
+                        "fontSize": 10,
+                        "font": "Montserrat",
+                        "bold": true,
+                        "color": "#444"
+                      }
+                    ]
+                  ]
+                },
+                "margin": [
+                  20,
+                  0,
+                  0,
+                  10
+                ],
+                "layout": {}
+              }
+            ]
+          },
+          {
+            "width": "auto",
+            "stack": [
+              {
+                "image": "/assests/not_approved_stamp.png",
+                "fit": [
+                  100,
+                  100
+                ],
+                "alignment": "center",
+                "margin": [
+                  0,
+                  15,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        ],
+        "margin": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    ]
+  }
+}

@@ -1,3 +1,0 @@
-/* Tailwind entry: base + inner selectors come from tailwind.config.js plugins. Shell uses utilities in PdfDocument.tsx. */
-@tailwind components;
-@tailwind utilities;

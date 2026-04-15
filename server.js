@@ -5,18 +5,16 @@ import fs from 'fs';
 import net from 'net';
 import puppeteer from 'puppeteer';
 import cors from 'cors';
+import { renderQuoteDocumentParts } from './lib/render-quote-html.js';
 import {
-  renderPage1InnerHtml,
-  renderPage1InnerStyle,
-  renderPage2InnerHtml,
-  renderPage2InnerStyle,
-  renderPage2TableSheetStyle,
-} from './lib/render-pdf-html.js';
-import { renderPdfHtml } from './pdf-react/render.tsx';
+  applyPdfOrphanCompaction,
+  PDF_VIEWPORT,
+} from './lib/pdf-print-compact.js';
+import { renderQuotePdfHtml } from './pdf/document-template.tsx';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const dataPath = path.join(__dirname, 'data1.json');
+const dataPath = path.join(__dirname, 'data3.json');
 
 /** node_modules may live next to pdf-lib (repo root) or inside pdf-lib */
 function resolveModuleDir(...segments) {
@@ -83,15 +81,10 @@ app.use(
 app.get('/pdf-render', (req, res) => {
   const data = loadQuoteData();
   const base = `http://127.0.0.1:${listenPort}`;
-  const innerHtml = renderPage1InnerHtml(data);
-  const innerHtml2 = renderPage2InnerHtml(data, base);
-  const html = renderPdfHtml({
+  const parts = renderQuoteDocumentParts(data, base);
+  const html = renderQuotePdfHtml({
     baseUrl: base,
-    page1Html: innerHtml,
-    page2Html: innerHtml2,
-    page1InnerStyle: renderPage1InnerStyle(data) || undefined,
-    page2SheetStyle: renderPage2TableSheetStyle(data) || undefined,
-    page2InnerStyle: renderPage2InnerStyle(data) || undefined,
+    ...parts,
   });
   res.type('html').send(html);
 });
@@ -104,8 +97,8 @@ app.get('/api/pdf', async (req, res) => {
   try {
     const page = await browser.newPage();
     await page.setViewport({
-      width: 794,
-      height: 1123,
+      width: PDF_VIEWPORT.width,
+      height: PDF_VIEWPORT.height,
       deviceScaleFactor: 1,
     });
     await page.goto(`http://127.0.0.1:${listenPort}/pdf-render`, {
@@ -139,7 +132,9 @@ app.get('/api/pdf', async (req, res) => {
         )
       );
     });
-    await page.emulateMediaType('screen');
+    /** Print media so @page + @media print (watermark / transparent canvas) apply in PDF output. */
+    await page.emulateMediaType('print');
+    await applyPdfOrphanCompaction(page);
     const pdfBuffer = await page.pdf({
       width: '210mm',
       height: '297mm',

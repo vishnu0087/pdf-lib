@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./pdf-react/tw-content-placeholder.html'],
+  content: ['./pdf/tw-content-placeholder.html'],
   corePlugins: {
     preflight: false,
   },
