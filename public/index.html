@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PDF</title>
+  </head>
+  <body>
+    <button type="button" id="btn">Download PDF</button>
+    <script>
+      document.getElementById('btn').addEventListener('click', async () => {
+        const res = await fetch('/api/pdf');
+        if (!res.ok) return;
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'document.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    </script>
+  </body>
+</html>
