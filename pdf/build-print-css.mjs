@@ -138,6 +138,11 @@ const innerPrintCss = `
     orphans: 2;
     widows: 2;
   }
+  /* Applied at PDF time when letter tail on the table-start page is ≥ ~15% of a page (applyPdfLetterTableLayout). */
+  .p2-table-wrap.p2-table-wrap--break-before {
+    break-before: page;
+    page-break-before: always;
+  }
 }
 `;
 

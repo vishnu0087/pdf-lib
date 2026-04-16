@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import type { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -25,9 +25,7 @@ export type QuotePdfHtmlInput = {
   tableInnerStyle?: string;
 };
 
-/** Shell layout uses React inline styles matching legacy CSS exactly (avoids JIT edge cases). */
 const shell = {
-  /** Grows with content; may span multiple PDF pages. Do not fix to one sheet — avoids footer overlap. */
   letterSection: {
     width: '210mm',
     minHeight: '297mm',
@@ -69,7 +67,6 @@ const shell = {
     overflow: 'visible' as const,
     boxSizing: 'border-box' as const,
   },
-  /** Screen/preview: tiled bg on the section. Print uses @page background in printWatermarkCss so every sheet is full A4. */
   tableFlowSection: {
     pageBreakInside: 'auto' as const,
     minHeight: '297mm',
@@ -139,12 +136,6 @@ function QuotePdfDocument({
 
   const bgUrl = `${baseUrl}/assests/pdf-background.png`;
 
-  /**
-   * Chromium PDF: element backgrounds on tall blocks paint once → last page shows a cropped tile.
-   * A single default @page background paints on every physical sheet (incl. last). Named @page is unreliable.
-   * html/body must be transparent in print or their white fill hides the page canvas.
-   * Letter bg img + table section bg are hidden in print to avoid double-printing the art.
-   */
   const printWatermarkCss = `@page {
   size: A4 portrait;
   margin: 0;
@@ -238,7 +229,6 @@ function QuotePdfDocument({
   );
 }
 
-/** Full HTML document string for Puppeteer from one quote data render pass. */
 export function renderQuotePdfHtml(input: QuotePdfHtmlInput): string {
   const markup = renderToStaticMarkup(
     <QuotePdfDocument {...input} printCss={getPrintCss()} />

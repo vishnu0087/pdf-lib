@@ -7,6 +7,7 @@ import puppeteer from 'puppeteer';
 import cors from 'cors';
 import { renderQuoteDocumentParts } from './lib/render-quote-html.js';
 import {
+  applyPdfLetterTableLayout,
   applyPdfOrphanCompaction,
   PDF_VIEWPORT,
 } from './lib/pdf-print-compact.js';
@@ -14,7 +15,7 @@ import { renderQuotePdfHtml } from './pdf/document-template.tsx';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const dataPath = path.join(__dirname, 'data3.json');
+const dataPath = path.join(__dirname, 'Quote', 'data1.json');
 
 /** node_modules may live next to pdf-lib (repo root) or inside pdf-lib */
 function resolveModuleDir(...segments) {
@@ -132,8 +133,8 @@ app.get('/api/pdf', async (req, res) => {
         )
       );
     });
-    /** Print media so @page + @media print (watermark / transparent canvas) apply in PDF output. */
     await page.emulateMediaType('print');
+    await applyPdfLetterTableLayout(page);
     await applyPdfOrphanCompaction(page);
     const pdfBuffer = await page.pdf({
       width: '210mm',
