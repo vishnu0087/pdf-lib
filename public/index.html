@@ -5,18 +5,27 @@
     <title>PDF</title>
   </head>
   <body>
-    <button type="button" id="btn">Download PDF</button>
+    <p>
+      <button type="button" id="btn">Download PDF</button>
+      <button type="button" id="btn-sales">Sales</button>
+    </p>
     <script>
-      document.getElementById('btn').addEventListener('click', async () => {
-        const res = await fetch('/api/pdf');
+      async function downloadPdf(url, filename) {
+        const res = await fetch(url);
         if (!res.ok) return;
         const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
+        const href = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = 'document.pdf';
+        a.href = href;
+        a.download = filename;
         a.click();
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(href);
+      }
+      document.getElementById('btn').addEventListener('click', () => {
+        downloadPdf('/api/pdf', 'document.pdf');
+      });
+      document.getElementById('btn-sales').addEventListener('click', () => {
+        downloadPdf('/api/pdf-sales', 'sales-order.pdf');
       });
     </script>
   </body>

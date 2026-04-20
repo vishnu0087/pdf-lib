@@ -19,6 +19,7 @@ function getPrintCss(): string {
 export type QuotePdfHtmlInput = {
   baseUrl: string;
   letterInnerHtml: string;
+  /** When empty, the second sheet is omitted (avoids a blank page for single-flow docs like sales). */
   tableFlowInnerHtml: string;
   letterInnerStyle?: string;
   tableSheetStyle?: string;
@@ -210,20 +211,22 @@ function QuotePdfDocument({
           />
         </section>
 
-        <section
-          className="sheet sheet--table"
-          aria-label="Page 2"
-          style={{
-            ...shell.tableFlowSection,
-            backgroundImage: `url(${bgUrl})`,
-          }}
-        >
-          <div
-            className="sheet-inner sheet-inner--p2"
-            style={shell.tableInner}
-            dangerouslySetInnerHTML={{ __html: tableFlowInnerHtml }}
-          />
-        </section>
+        {tableFlowInnerHtml.trim() !== '' ? (
+          <section
+            className="sheet sheet--table"
+            aria-label="Continuation"
+            style={{
+              ...shell.tableFlowSection,
+              backgroundImage: `url(${bgUrl})`,
+            }}
+          >
+            <div
+              className="sheet-inner sheet-inner--p2"
+              style={shell.tableInner}
+              dangerouslySetInnerHTML={{ __html: tableFlowInnerHtml }}
+            />
+          </section>
+        ) : null}
       </body>
     </html>
   );
