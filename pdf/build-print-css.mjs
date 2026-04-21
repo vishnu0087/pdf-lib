@@ -49,6 +49,83 @@ const innerPrintCss = `
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
+/*
+ * Line-items grids (Quote + Sales): column widths and row heights follow cell content by default
+ * (table-layout: auto). Set document.lineItemsColumnSizing === "fixed" for legacy percentage columns.
+ */
+.quote-table.quote-table--data-columns {
+  table-layout: auto;
+  width: 100%;
+}
+.quote-table.quote-table--data-columns tr {
+  height: auto;
+}
+.quote-table.quote-table--data-columns thead td {
+  vertical-align: middle;
+}
+.quote-table.quote-table--data-columns tbody td {
+  vertical-align: top;
+}
+.quote-table.quote-table--data-columns col.qt-li-col-tight {
+  width: auto;
+}
+.quote-table.quote-table--data-columns col.qt-li-col-fill {
+  width: auto;
+  min-width: 10%;
+}
+.quote-table.quote-table--data-columns thead td:not(:nth-child(3)) {
+  white-space: nowrap;
+}
+.qt-sales-main-items-wrap--data-columns > table.qt-html-table {
+  table-layout: auto !important;
+  width: 100% !important;
+}
+.qt-sales-main-items-wrap--data-columns > table.qt-html-table tr {
+  height: auto !important;
+}
+.qt-sales-main-items-wrap--data-columns > table.qt-html-table > tbody td {
+  vertical-align: top !important;
+}
+.qt-sales-main-items-wrap--data-columns > table.qt-html-table > tbody > tr:first-child > td {
+  vertical-align: middle !important;
+}
+.qt-sales-main-items-wrap--data-columns > table.qt-html-table colgroup col:not(:nth-child(2)) {
+  width: auto !important;
+  min-width: 0 !important;
+}
+.qt-sales-main-items-wrap--data-columns > table.qt-html-table colgroup col:nth-child(2) {
+  width: auto !important;
+  min-width: 10% !important;
+  max-width: none !important;
+}
+.qt-sales-main-items-wrap--data-columns > table.qt-html-table > tbody > tr:first-child > td:nth-child(1),
+.qt-sales-main-items-wrap--data-columns > table.qt-html-table > tbody > tr:first-child > td:nth-child(3),
+.qt-sales-main-items-wrap--data-columns > table.qt-html-table > tbody > tr:first-child > td:nth-child(4),
+.qt-sales-main-items-wrap--data-columns > table.qt-html-table > tbody > tr:first-child > td:nth-child(5),
+.qt-sales-main-items-wrap--data-columns > table.qt-html-table > tbody > tr:first-child > td:nth-child(6),
+.qt-sales-main-items-wrap--data-columns > table.qt-html-table > tbody > tr:first-child > td:nth-child(7) {
+  white-space: nowrap;
+}
+/* Groups line-items + grand-total block; no extra outer border (frame comes from table borders, like Sales) */
+.p2-quote-line-items-shell {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+.p2-quote-line-items-shell > .p2-after-table--flush-totals {
+  margin: 0;
+  padding: 0;
+}
+/* Quote grand total: same idea as Sales — outer star-auto table continues the line-items frame (no top edge) */
+.p2-quote-line-items-shell > .p2-after-table--flush-totals table.qt-html-table--star-auto {
+  page-break-inside: avoid;
+  border: 1px solid #ddd;
+  border-top: none !important;
+  margin-top: 0;
+  box-sizing: border-box;
+  width: 100%;
+}
 .qt-nested-table {
   width: 100%;
   font-size: 10pt;
@@ -147,7 +224,22 @@ const innerPrintCss = `
 .qt-sales-main-items-wrap > table.qt-html-table > tbody > tr > td[colspan='7'] > table.qt-html-table--light-lines td {
   padding: 1.5pt 5pt !important;
 }
-/* Sales: omit top edge so the frame meets the line-items table above in the flow */
+/* Sales: line-items block + grand total grouped (same flush frame as Quote) */
+.p2-sales-line-items-shell {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+.p2-sales-line-items-shell > .p2-after-table--flush-totals table.qt-html-table--star-auto {
+  page-break-inside: avoid;
+  border: 1px solid #ddd;
+  border-top: none !important;
+  margin-top: 0;
+  box-sizing: border-box;
+  width: 100%;
+}
+/* Sales: omit top edge so the frame meets the line-items table above (fallback when shell is not used) */
 .p2-after-table--sales table.qt-html-table--star-auto:first-of-type {
   page-break-inside: avoid;
   border: 1px solid #ddd;
@@ -155,8 +247,8 @@ const innerPrintCss = `
   margin-top: 0;
   box-sizing: border-box;
 }
-/* Quote: totals block sits below .p2-table-wrap — full box including top */
-.p2-after-table:not(.p2-after-table--sales) table.qt-html-table--star-auto {
+/* Quote: totals star-auto when NOT flush under line items (standalone block) */
+.p2-after-table:not(.p2-after-table--sales):not(.p2-after-table--flush-totals) table.qt-html-table--star-auto {
   page-break-inside: avoid;
   border: 1px solid #ddd;
   margin-top: 0;

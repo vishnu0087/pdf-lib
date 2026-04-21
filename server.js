@@ -18,7 +18,7 @@ import { renderQuotePdfHtml } from './pdf/document-template.tsx';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const dataPath = path.join(__dirname, 'Quote', 'data1.json');
-const salesDataPath = path.join(__dirname, 'Sales', 's-data.json');
+const salesDataPath = path.join(__dirname, 'Sales', 's-data1.json');
 
 /** node_modules may live next to pdf-lib (repo root) or inside pdf-lib */
 function resolveModuleDir(...segments) {
