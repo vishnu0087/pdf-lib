@@ -1,6 +1,6 @@
 /**
  * Emits print.built.css: html/body base + rules for injected HTML (quote-table, qt-*, …).
- * @page (size, margin, watermark) is injected in document-template.tsx (dynamic asset URL).
+ * @page (size, margin, watermark) is injected in document-template-core.tsx (dynamic asset URL).
  */
 import fs from 'fs';
 import path from 'path';
@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-/** @page size/margin + full-bleed watermark live in document-template.tsx (dynamic asset URL). */
+/** @page size/margin + full-bleed watermark live in document-template-core.tsx (dynamic asset URL). */
 const basePrintCss = `
 html {
   font-size: 10pt;

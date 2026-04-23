@@ -6,8 +6,10 @@
   </head>
   <body>
     <p>
-      <button type="button" id="btn">Download PDF</button>
+      <button type="button" id="btn">Quote</button>
       <button type="button" id="btn-sales">Sales</button>
+      <button type="button" id="btn-invoice">Invoice</button>
+      <button type="button" id="btn-salary">Salary</button>
     </p>
     <script>
       async function downloadPdf(url, filename) {
@@ -26,6 +28,12 @@
       });
       document.getElementById('btn-sales').addEventListener('click', () => {
         downloadPdf('/api/pdf-sales', 'sales-order.pdf');
+      });
+      document.getElementById('btn-invoice').addEventListener('click', () => {
+        downloadPdf('/api/pdf-invoice', 'invoice.pdf');
+      });
+      document.getElementById('btn-salary').addEventListener('click', () => {
+        downloadPdf('/api/pdf-salary', 'salary-slip.pdf');
       });
     </script>
   </body>

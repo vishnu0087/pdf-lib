@@ -1,0 +1,1946 @@
+{
+    "docDefinition": {
+      "pageSize": "A4",
+      "pageMargins": [
+        22,
+        90,
+        22,
+        36
+      ],
+      "background": {
+        "image": "private/cache/8f16e561-0d94-40e3-a128-3a789318cb50.png",
+        "width": 595
+      },
+      "defaultStyle": {
+        "font": "Roboto",
+        "fontSize": 8,
+        "color": "#222"
+      },
+      "styles": {
+        "header": {
+          "fontSize": 10,
+          "bold": true,
+          "alignment": "center",
+          "font": "Roboto"
+        }
+      },
+      "content": [
+        {
+          "table": {
+            "widths": [
+              50,
+              "*",
+              "auto"
+            ],
+            "body": [
+              [
+                {
+                  "image": "private/cache/973b995e-a271-464b-a707-569ea4367258.png",
+                  "width": 44,
+                  "alignment": "center",
+                  "margin": [
+                    0,
+                    1,
+                    0,
+                    1
+                  ]
+                },
+                {
+                  "stack": [
+                    {
+                      "text": "Devyami Automatic Pumps & Controls Pvt. Ltd.",
+                      "fontSize": 12,
+                      "bold": true,
+                      "color": "#222"
+                    },
+                    {
+                      "text": "Salary Slip",
+                      "fontSize": 8,
+                      "color": "#666"
+                    }
+                  ],
+                  "margin": [
+                    0,
+                    1,
+                    0,
+                    1
+                  ]
+                },
+                {
+                  "stack": [
+                    {
+                      "text": "January 2025",
+                      "fontSize": 10,
+                      "bold": true,
+                      "alignment": "right",
+                      "color": "#222"
+                    },
+                    {
+                      "text": "Generated: 20th April, 2026",
+                      "fontSize": 7,
+                      "color": "#666",
+                      "alignment": "right"
+                    },
+                    {
+                      "text": "Status: Processed",
+                      "fontSize": 7,
+                      "color": "#388e3c",
+                      "alignment": "right",
+                      "bold": true
+                    }
+                  ],
+                  "margin": [
+                    0,
+                    1,
+                    0,
+                    1
+                  ]
+                }
+              ]
+            ]
+          },
+          "layout": {},
+          "margin": [
+            0,
+            0,
+            0,
+            4
+          ]
+        },
+        {
+          "columnGap": 10,
+          "columns": [
+            {
+              "width": "*",
+              "stack": [
+                {
+                  "table": {
+                    "widths": [
+                      "*"
+                    ],
+                    "body": [
+                      [
+                        {
+                          "text": "EMPLOYEE DETAILS",
+                          "color": "#666",
+                          "fillColor": "#eeeeee",
+                          "bold": true,
+                          "fontSize": 7,
+                          "margin": [
+                            5,
+                            2,
+                            5,
+                            2
+                          ],
+                          "characterSpacing": 1
+                        }
+                      ]
+                    ]
+                  },
+                  "layout": "noBorders",
+                  "margin": [
+                    0,
+                    4,
+                    0,
+                    2
+                  ]
+                },
+                {
+                  "stack": [
+                    {
+                      "columns": [
+                        {
+                          "text": "Employee ID",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "522",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Name",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "Mahendra Emp 1",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Phone",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "9898989898",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Date of Joining",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "20th April, 2026",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Department",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "N/A",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Salary Type",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "Fixed",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Address",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "c",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "width": "*",
+              "stack": [
+                {
+                  "table": {
+                    "widths": [
+                      "*"
+                    ],
+                    "body": [
+                      [
+                        {
+                          "text": "PAYMENT DETAILS",
+                          "color": "#666",
+                          "fillColor": "#eeeeee",
+                          "bold": true,
+                          "fontSize": 7,
+                          "margin": [
+                            5,
+                            2,
+                            5,
+                            2
+                          ],
+                          "characterSpacing": 1
+                        }
+                      ]
+                    ]
+                  },
+                  "layout": "noBorders",
+                  "margin": [
+                    0,
+                    4,
+                    0,
+                    2
+                  ]
+                },
+                {
+                  "stack": [
+                    {
+                      "columns": [
+                        {
+                          "text": "Payment Type",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "NEFT",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Bank Name",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "a",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Account Holder",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "Mahendra Emp 1",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Account Number",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "32232323",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "table": {
+                    "widths": [
+                      "*"
+                    ],
+                    "body": [
+                      [
+                        {
+                          "text": "COMPLIANCE DETAILS",
+                          "color": "#666",
+                          "fillColor": "#eeeeee",
+                          "bold": true,
+                          "fontSize": 7,
+                          "margin": [
+                            5,
+                            2,
+                            5,
+                            2
+                          ],
+                          "characterSpacing": 1
+                        }
+                      ]
+                    ]
+                  },
+                  "layout": "noBorders",
+                  "margin": [
+                    0,
+                    4,
+                    0,
+                    2
+                  ]
+                },
+                {
+                  "stack": [
+                    {
+                      "columns": [
+                        {
+                          "text": "PF Number",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "a",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "UAN Number",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "b",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "ESIC Number",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "c",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Aadhaar Number",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "d",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "PAN Number",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "e",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "text": "ATTENDANCE & MONTHLY DETAILS",
+                  "color": "#666",
+                  "fillColor": "#eeeeee",
+                  "bold": true,
+                  "fontSize": 7,
+                  "margin": [
+                    5,
+                    2,
+                    5,
+                    2
+                  ],
+                  "characterSpacing": 1
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "margin": [
+            0,
+            4,
+            0,
+            2
+          ]
+        },
+        {
+          "columnGap": 10,
+          "columns": [
+            {
+              "width": "*",
+              "stack": [
+                {
+                  "stack": [
+                    {
+                      "columns": [
+                        {
+                          "text": "Working Hours",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "220",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Full Days",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "0",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Half Days",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "31",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Paid Leaves",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "0",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Absent",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "0",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "width": "*",
+              "stack": [
+                {
+                  "stack": [
+                    {
+                      "columns": [
+                        {
+                          "text": "Approved FD Leaves",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "0",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Approved HD Leaves",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "0",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Full Day Penalties",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "0",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Half Day Penalties",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "31",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "text": "Late Come Penalties",
+                          "color": "#666",
+                          "fontSize": 7,
+                          "width": "auto"
+                        },
+                        {
+                          "text": "0",
+                          "bold": true,
+                          "fontSize": 7,
+                          "color": "#222",
+                          "alignment": "right"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "columnGap": 10,
+          "columns": [
+            {
+              "width": "*",
+              "stack": [
+                {
+                  "table": {
+                    "widths": [
+                      "*"
+                    ],
+                    "body": [
+                      [
+                        {
+                          "text": "EARNINGS",
+                          "color": "#666",
+                          "fillColor": "#eeeeee",
+                          "bold": true,
+                          "fontSize": 7,
+                          "margin": [
+                            5,
+                            2,
+                            5,
+                            2
+                          ],
+                          "characterSpacing": 1
+                        }
+                      ]
+                    ]
+                  },
+                  "layout": "noBorders",
+                  "margin": [
+                    0,
+                    4,
+                    0,
+                    2
+                  ]
+                },
+                {
+                  "text": "BASIC SALARY COMPONENTS",
+                  "color": "#888",
+                  "bold": true,
+                  "fontSize": 7,
+                  "characterSpacing": 0.5,
+                  "margin": [
+                    2,
+                    3,
+                    0,
+                    1
+                  ]
+                },
+                {
+                  "stack": [
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "+ Fixed Salary",
+                              "fontSize": 8,
+                              "bold": false,
+                              "color": "#388e3c"
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹13,600/-",
+                          "fontSize": 8,
+                          "bold": false,
+                          "color": "#388e3c",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "+ Rewards",
+                              "fontSize": 8,
+                              "bold": false,
+                              "color": "#388e3c"
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹780/-",
+                          "fontSize": 8,
+                          "bold": false,
+                          "color": "#388e3c",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "Basic Components Total",
+                              "fontSize": 8,
+                              "bold": true,
+                              "color": "#388e3c"
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹14,380/-",
+                          "fontSize": 10,
+                          "bold": true,
+                          "color": "#388e3c",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        2,
+                        2,
+                        2
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "ul": [
+                    {
+                      "text": "Good  — ₹780/-",
+                      "fontSize": 7,
+                      "color": "#555"
+                    }
+                  ],
+                  "margin": [
+                    10,
+                    1,
+                    0,
+                    2
+                  ]
+                },
+                {
+                  "text": "ALLOWANCES",
+                  "color": "#888",
+                  "bold": true,
+                  "fontSize": 7,
+                  "characterSpacing": 0.5,
+                  "margin": [
+                    2,
+                    3,
+                    0,
+                    1
+                  ]
+                },
+                {
+                  "stack": [
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "+ HRA",
+                              "fontSize": 8,
+                              "bold": false,
+                              "color": "#388e3c"
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹4,869/-",
+                          "fontSize": 8,
+                          "bold": false,
+                          "color": "#388e3c",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "+ Other Allowance",
+                              "fontSize": 8,
+                              "bold": false,
+                              "color": "#388e3c"
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹3,528/-",
+                          "fontSize": 8,
+                          "bold": false,
+                          "color": "#388e3c",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "Allowances Total",
+                              "fontSize": 8,
+                              "bold": true,
+                              "color": "#388e3c"
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹8,397/-",
+                          "fontSize": 10,
+                          "bold": true,
+                          "color": "#388e3c",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        2,
+                        2,
+                        2
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "ul": [
+                    {
+                      "text": "Sp — ₹3,528/-",
+                      "fontSize": 7,
+                      "color": "#555"
+                    }
+                  ],
+                  "margin": [
+                    10,
+                    1,
+                    0,
+                    2
+                  ]
+                },
+                {
+                  "stack": [
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "Total Earnings",
+                              "fontSize": 8,
+                              "bold": true,
+                              "color": "#388e3c"
+                            },
+                            {
+                              "text": "Basic + Allowances",
+                              "fontSize": 7,
+                              "color": "#888",
+                              "italics": true
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹22,777/-",
+                          "fontSize": 10,
+                          "bold": true,
+                          "color": "#388e3c",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        2,
+                        2,
+                        2
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "width": "*",
+              "stack": [
+                {
+                  "table": {
+                    "widths": [
+                      "*"
+                    ],
+                    "body": [
+                      [
+                        {
+                          "text": "DEDUCTIONS",
+                          "color": "#666",
+                          "fillColor": "#eeeeee",
+                          "bold": true,
+                          "fontSize": 7,
+                          "margin": [
+                            5,
+                            2,
+                            5,
+                            2
+                          ],
+                          "characterSpacing": 1
+                        }
+                      ]
+                    ]
+                  },
+                  "layout": "noBorders",
+                  "margin": [
+                    0,
+                    4,
+                    0,
+                    2
+                  ]
+                },
+                {
+                  "text": "PENALTIES (FROM BASIC SALARY)",
+                  "color": "#888",
+                  "bold": true,
+                  "fontSize": 7,
+                  "characterSpacing": 0.5,
+                  "margin": [
+                    2,
+                    3,
+                    0,
+                    1
+                  ]
+                },
+                {
+                  "stack": [
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "− Manual Penalties",
+                              "fontSize": 8,
+                              "bold": false,
+                              "color": "#d32f2f"
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹400/-",
+                          "fontSize": 8,
+                          "bold": false,
+                          "color": "#d32f2f",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "Total Penalties",
+                              "fontSize": 8,
+                              "bold": true,
+                              "color": "#d32f2f"
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹400/-",
+                          "fontSize": 10,
+                          "bold": true,
+                          "color": "#d32f2f",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        2,
+                        2,
+                        2
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "ul": [
+                    {
+                      "text": "Bad — -₹400/-",
+                      "fontSize": 7,
+                      "color": "#555"
+                    }
+                  ],
+                  "margin": [
+                    10,
+                    1,
+                    0,
+                    2
+                  ]
+                },
+                {
+                  "text": "STATUTORY COMPLIANCE & TAXES",
+                  "color": "#888",
+                  "bold": true,
+                  "fontSize": 7,
+                  "characterSpacing": 0.5,
+                  "margin": [
+                    2,
+                    3,
+                    0,
+                    1
+                  ]
+                },
+                {
+                  "stack": [
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "− EPF (Employee)",
+                              "fontSize": 8,
+                              "bold": false,
+                              "color": "#d32f2f"
+                            },
+                            {
+                              "text": "12% on ₹13980",
+                              "fontSize": 7,
+                              "color": "#888",
+                              "italics": true
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹1,678/-",
+                          "fontSize": 8,
+                          "bold": false,
+                          "color": "#d32f2f",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "EPF (Employer)",
+                              "fontSize": 8,
+                              "bold": false,
+                              "color": "#666"
+                            },
+                            {
+                              "text": "12% on ₹13980",
+                              "fontSize": 7,
+                              "color": "#888",
+                              "italics": true
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹1,678/-",
+                          "fontSize": 8,
+                          "bold": false,
+                          "color": "#666",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "− ESIC (Employee)",
+                              "fontSize": 8,
+                              "bold": false,
+                              "color": "#d32f2f"
+                            },
+                            {
+                              "text": "0.75% on ₹22377",
+                              "fontSize": 7,
+                              "color": "#888",
+                              "italics": true
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹168/-",
+                          "fontSize": 8,
+                          "bold": false,
+                          "color": "#d32f2f",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "ESIC (Employer)",
+                              "fontSize": 8,
+                              "bold": false,
+                              "color": "#666"
+                            },
+                            {
+                              "text": "3.25% on ₹22377",
+                              "fontSize": 7,
+                              "color": "#888",
+                              "italics": true
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹728/-",
+                          "fontSize": 8,
+                          "bold": false,
+                          "color": "#666",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "− Professional Tax",
+                              "fontSize": 8,
+                              "bold": false,
+                              "color": "#d32f2f"
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹200/-",
+                          "fontSize": 8,
+                          "bold": false,
+                          "color": "#d32f2f",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "Employee Compliance Total",
+                              "fontSize": 8,
+                              "bold": true,
+                              "color": "#d32f2f"
+                            },
+                            {
+                              "text": "EPF EE + ESIC EE + PT",
+                              "fontSize": 7,
+                              "color": "#888",
+                              "italics": true
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹2,046/-",
+                          "fontSize": 10,
+                          "bold": true,
+                          "color": "#d32f2f",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        2,
+                        2,
+                        2
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "text": "LOAN, SECURITY DEPOSIT & ADJUSTMENTS",
+                  "color": "#888",
+                  "bold": true,
+                  "fontSize": 7,
+                  "characterSpacing": 0.5,
+                  "margin": [
+                    2,
+                    3,
+                    0,
+                    1
+                  ]
+                },
+                {
+                  "stack": [
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "− Loan / Advance",
+                              "fontSize": 8,
+                              "bold": false,
+                              "color": "#d32f2f"
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹5,000/-",
+                          "fontSize": 8,
+                          "bold": false,
+                          "color": "#d32f2f",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    },
+                    {
+                      "columns": [
+                        {
+                          "stack": [
+                            {
+                              "text": "+ Adjustments",
+                              "fontSize": 8,
+                              "bold": false,
+                              "color": "#388e3c"
+                            }
+                          ],
+                          "width": "*"
+                        },
+                        {
+                          "text": "₹19/-",
+                          "fontSize": 8,
+                          "bold": false,
+                          "color": "#388e3c",
+                          "alignment": "right",
+                          "width": "auto"
+                        }
+                      ],
+                      "columnGap": 6,
+                      "margin": [
+                        2,
+                        1,
+                        2,
+                        1
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "ul": [
+                    {
+                      "text": "Rounding adjustment for net pay — ₹19/-",
+                      "fontSize": 7,
+                      "color": "#555"
+                    }
+                  ],
+                  "margin": [
+                    10,
+                    1,
+                    0,
+                    2
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "table": {
+            "widths": [
+              "*"
+            ],
+            "body": [
+              [
+                {
+                  "text": "COMPANY BALANCE",
+                  "color": "#666",
+                  "fillColor": "#eeeeee",
+                  "bold": true,
+                  "fontSize": 7,
+                  "margin": [
+                    5,
+                    2,
+                    5,
+                    2
+                  ],
+                  "characterSpacing": 1
+                }
+              ]
+            ]
+          },
+          "layout": "noBorders",
+          "margin": [
+            0,
+            4,
+            0,
+            2
+          ]
+        },
+        {
+          "stack": [
+            {
+              "columns": [
+                {
+                  "text": "Total Advance Pending",
+                  "color": "#666",
+                  "fontSize": 7,
+                  "width": "auto"
+                },
+                {
+                  "text": "₹2,95,000/-",
+                  "bold": true,
+                  "fontSize": 7,
+                  "color": "#222",
+                  "alignment": "right"
+                }
+              ],
+              "columnGap": 6,
+              "margin": [
+                2,
+                1,
+                2,
+                1
+              ]
+            },
+            {
+              "columns": [
+                {
+                  "text": "Total Security Deposit",
+                  "color": "#666",
+                  "fontSize": 7,
+                  "width": "auto"
+                },
+                {
+                  "text": "₹50,000/-",
+                  "bold": true,
+                  "fontSize": 7,
+                  "color": "#222",
+                  "alignment": "right"
+                }
+              ],
+              "columnGap": 6,
+              "margin": [
+                2,
+                1,
+                2,
+                1
+              ]
+            }
+          ]
+        },
+        {
+          "table": {
+            "widths": [
+              "*",
+              "auto"
+            ],
+            "body": [
+              [
+                {
+                  "text": "NET PAY",
+                  "bold": true,
+                  "fontSize": 11,
+                  "color": "#1976d2",
+                  "margin": [
+                    6,
+                    4,
+                    6,
+                    0
+                  ]
+                },
+                {
+                  "text": "₹15,350/-",
+                  "bold": true,
+                  "fontSize": 16,
+                  "color": "#1976d2",
+                  "alignment": "right",
+                  "margin": [
+                    6,
+                    2,
+                    6,
+                    0
+                  ]
+                }
+              ],
+              [
+                {
+                  "stack": [
+                    {
+                      "text": "Fifteen Thousand Three Hundred And Fifty Rupees Only",
+                      "fontSize": 8,
+                      "color": "#555"
+                    },
+                    {
+                      "text": [
+                        {
+                          "text": "Earnings ",
+                          "color": "#666",
+                          "fontSize": 7
+                        },
+                        {
+                          "text": "₹22,777/-",
+                          "color": "#388e3c",
+                          "bold": true,
+                          "fontSize": 7
+                        },
+                        {
+                          "text": "   −  Penalties ",
+                          "color": "#666",
+                          "fontSize": 7
+                        },
+                        {
+                          "text": "₹400/-",
+                          "color": "#d32f2f",
+                          "bold": true,
+                          "fontSize": 7
+                        },
+                        {
+                          "text": "   −  Compliance ",
+                          "color": "#666",
+                          "fontSize": 7
+                        },
+                        {
+                          "text": "₹2,046/-",
+                          "color": "#d32f2f",
+                          "bold": true,
+                          "fontSize": 7
+                        },
+                        {
+                          "text": "   −  Loan/SD ",
+                          "color": "#666",
+                          "fontSize": 7
+                        },
+                        {
+                          "text": "₹5,000/-",
+                          "color": "#d32f2f",
+                          "bold": true,
+                          "fontSize": 7
+                        },
+                        {
+                          "text": "   +  Adj ",
+                          "color": "#666",
+                          "fontSize": 7
+                        },
+                        {
+                          "text": "₹19/-",
+                          "color": "#388e3c",
+                          "bold": true,
+                          "fontSize": 7
+                        }
+                      ],
+                      "margin": [
+                        0,
+                        1,
+                        0,
+                        0
+                      ]
+                    }
+                  ],
+                  "margin": [
+                    6,
+                    0,
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "text": "",
+                  "margin": [
+                    6,
+                    0,
+                    6,
+                    4
+                  ]
+                }
+              ]
+            ]
+          },
+          "layout": {},
+          "margin": [
+            0,
+            4,
+            0,
+            2
+          ]
+        },
+        {
+          "columns": [
+            {
+              "width": "*",
+              "text": ""
+            },
+            {
+              "width": 110,
+              "stack": [
+                {
+                  "image": "private/cache/f7bb6f23-48bb-426e-913f-800afa0af9eb.png",
+                  "width": 46,
+                  "alignment": "center"
+                },
+                {
+                  "text": "Authorised Signature",
+                  "alignment": "center",
+                  "fontSize": 7,
+                  "color": "#666",
+                  "margin": [
+                    0,
+                    1,
+                    0,
+                    0
+                  ]
+                }
+              ]
+            }
+          ],
+          "margin": [
+            0,
+            4,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "appendPdfPaths": [],
+    "originalFileName": "January-25-Mahendra Emp 1-522.pdf",
+    "uploadUrl": "https://devyami-quotations.s3.ap-south-1.amazonaws.com/January-25-Mahendra%20Emp%201-522.pdf?Content-Type=application%2Fpdf&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAYZOXYHM6YOZX2DNZ%2F20260421%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20260421T111919Z&X-Amz-Expires=600&X-Amz-Signature=c25bf13072ad3415484ff811ac50140061373aa621a3124814d63258628c5295&X-Amz-SignedHeaders=host%3Bx-amz-storage-class&x-amz-storage-class=ONEZONE_IA"
+  }

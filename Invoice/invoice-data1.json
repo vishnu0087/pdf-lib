@@ -1,0 +1,1483 @@
+{
+  "format": "puppeteer-invoice-pdf",
+  "formatVersion": 1,
+  "meta": {
+    "title": "Invoice",
+    "source": "invoice-data1.json (same body pipeline as Sales s-data1.json; shell background as Quote data1.json / pdf-background.png)",
+    "pagesIncluded": [
+      1,
+      2
+    ]
+  },
+  "document": {
+    "pageSize": "A4",
+    "pageMarginsPt": {
+      "left": 24,
+      "top": 100,
+      "right": 32,
+      "bottom": 60
+    },
+    "pageMarginsMm": {
+      "left": 8.47,
+      "top": 35.28,
+      "right": 11.29,
+      "bottom": 21.17
+    },
+    "defaultStyle": {
+      "font": "Montserrat",
+      "fontSize": 8
+    },
+    "pdfFontScale": 0.92,
+    "styles": {
+      "header": {
+        "font": "Montserrat",
+        "fontSize": 10,
+        "bold": true,
+        "margin": [
+          0,
+          0,
+          0,
+          10
+        ]
+      },
+      "companyName": {
+        "font": "Montserrat",
+        "fontSize": 8,
+        "bold": true,
+        "margin": [
+          0,
+          0,
+          0,
+          5
+        ]
+      },
+      "gstInfo": {
+        "font": "Montserrat",
+        "fontSize": 8,
+        "bold": true,
+        "margin": [
+          0,
+          4,
+          0,
+          0
+        ]
+      },
+      "sectionHeader": {
+        "font": "Montserrat",
+        "fontSize": 8,
+        "bold": true,
+        "decoration": "underline",
+        "margin": [
+          0,
+          0,
+          0,
+          4
+        ]
+      },
+      "addressName": {
+        "font": "Montserrat",
+        "fontSize": 8,
+        "bold": true
+      },
+      "label": {
+        "font": "Montserrat",
+        "fontSize": 7,
+        "bold": true
+      },
+      "invoiceLabel": {
+        "font": "Montserrat",
+        "fontSize": 7,
+        "bold": true
+      },
+      "tableHeader": {
+        "font": "Montserrat",
+        "fontSize": 7,
+        "bold": true,
+        "fillColor": "#ffb74d"
+      },
+      "deliveryTable": {
+        "margin": [
+          0,
+          5,
+          0,
+          0
+        ]
+      },
+      "itemsTable": {
+        "margin": [
+          0,
+          5,
+          0,
+          0
+        ]
+      },
+      "noStyle": {},
+      "smaller": {
+        "font": "Montserrat",
+        "fontSize": 7,
+        "italics": true,
+        "color": "#222222"
+      },
+      "smaller2": {
+        "font": "Montserrat",
+        "fontSize": 7,
+        "italics": true,
+        "color": "#333"
+      },
+      "totalsTable": {
+        "margin": [
+          0,
+          5,
+          0,
+          0
+        ]
+      },
+      "amountWords": {
+        "font": "Montserrat",
+        "fontSize": 8,
+        "bold": true,
+        "italics": true
+      },
+      "hsnTable": {
+        "margin": [
+          0,
+          5,
+          0,
+          0
+        ]
+      },
+      "taxAmountWords": {
+        "font": "Montserrat",
+        "fontSize": 8,
+        "bold": true,
+        "italics": true
+      },
+      "panInfo": {
+        "font": "Montserrat",
+        "fontSize": 8,
+        "bold": true
+      },
+      "declaration": {
+        "font": "Montserrat",
+        "fontSize": 7,
+        "italics": true
+      },
+      "bankLabel": {
+        "font": "Montserrat",
+        "fontSize": 7,
+        "bold": true
+      },
+      "signatureLabel": {
+        "font": "Montserrat",
+        "fontSize": 8,
+        "bold": true
+      },
+      "companySignature": {
+        "font": "Montserrat",
+        "fontSize": 8,
+        "bold": true
+      },
+      "signatory": {
+        "font": "Montserrat",
+        "fontSize": 7,
+        "italics": true
+      },
+      "jurisdiction": {
+        "font": "Montserrat",
+        "fontSize": 7,
+        "bold": true
+      },
+      "computerGenerated": {
+        "font": "Montserrat",
+        "fontSize": 7,
+        "italics": true
+      }
+    },
+    "background": {
+      "imageRef": "pdf-background",
+      "widthPt": 595
+    },
+    "assets": {
+      "pdf-background": {
+        "path": "assests/pdf-background.png",
+        "urlPath": "/assests/pdf-background.png"
+      },
+      "not_approved": {
+        "path": "assests/not_approved.png",
+        "urlPath": "/assests/not_approved.png"
+      },
+      "not_approved_stamp": {
+        "path": "assests/not_approved_stamp.png",
+        "urlPath": "/assests/not_approved_stamp.png"
+      }
+    }
+  },
+  "page1": {
+    "pageBreakAfter": true,
+    "contentInsetPt": {
+      "left": 24,
+      "top": 110,
+      "right": 32,
+      "bottom": 72
+    },
+    "blocks": []
+  },
+  "page2": {
+    "enabled": true,
+    "fontScale": 1,
+    "contentInsetPt": {
+      "left": 24,
+      "top": 110,
+      "right": 32,
+      "bottom": 72
+    },
+    "tableBody": [
+      [
+        {
+          "text": "",
+          "style": "tableHeader",
+          "alignment": "center",
+          "colSpan": 8
+        }
+      ],
+      [
+        {
+          "text": "",
+          "colSpan": 8
+        },
+        [
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          },
+          {
+            "text": ""
+          }
+        ]
+      ]
+    ],
+    "afterTable": [
+      {
+        "image": "private/assets/not_approved.png",
+        "width": 120,
+        "alignment": "center",
+        "absolutePosition": {
+          "x": -460,
+          "y": 0
+        }
+      },
+      {
+        "text": "Invoice",
+        "style": "header",
+        "alignment": "center",
+        "fontSize": 14,
+        "margin": [
+          0,
+          0,
+          0,
+          10
+        ]
+      },
+      {
+        "table": {
+          "widths": [
+            "50%",
+            "50%"
+          ],
+          "body": [
+            [
+              {
+                "stack": [
+                  {},
+                  {
+                    "text": "Devyami Automatic Pumps & Controls Pvt. Ltd.",
+                    "style": "companyName"
+                  },
+                  {
+                    "text": "203, Radhakisan Appartment Beside HDFC bank,  Nr. Deep chamber crossing  Vadodara - 390011  Gujarat, India "
+                  },
+                  {
+                    "text": "GSTIN: 24AACCD7417K1ZN",
+                    "style": "gstInfo"
+                  }
+                ]
+              },
+              {
+                "stack": [
+                  {
+                    "columns": [
+                      {
+                        "text": "Order No.",
+                        "width": "30%",
+                        "style": "invoiceLabel"
+                      },
+                      {
+                        "text": "INV-26030019",
+                        "width": "70%"
+                      }
+                    ]
+                  },
+                  {
+                    "columns": [
+                      {
+                        "text": "Version",
+                        "width": "30%",
+                        "style": "invoiceLabel"
+                      },
+                      {
+                        "text": "4",
+                        "width": "70%"
+                      }
+                    ]
+                  },
+                  {
+                    "columns": [
+                      {
+                        "text": "Dated",
+                        "width": "30%",
+                        "style": "invoiceLabel"
+                      },
+                      {
+                        "text": "24/03/2026",
+                        "width": "70%"
+                      }
+                    ]
+                  },
+                  {}
+                ]
+              }
+            ]
+          ]
+        },
+        "layout": "lightHorizontalLines"
+      },
+      {
+        "table": {
+          "widths": [
+            "50%",
+            "50%"
+          ],
+          "body": [
+            [
+              {
+                "stack": [
+                  {
+                    "text": "Invoice To,",
+                    "font": "Montserrat",
+                    "fontSize": 7,
+                    "margin": [
+                      0,
+                      0,
+                      0,
+                      5
+                    ]
+                  },
+                  {
+                    "text": "Billing Details (Buyer)",
+                    "style": "sectionHeader"
+                  },
+                  {
+                    "text": "BILLING Yash SHAH",
+                    "style": "addressName"
+                  },
+                  "BILLING Yash SHAH Address",
+                  {
+                    "text": "GSTIN: -",
+                    "style": "gstInfo"
+                  },
+                  {
+                    "text": "Contact: 09925069749",
+                    "style": "gstInfo"
+                  }
+                ]
+              },
+              {
+                "stack": [
+                  {
+                    "text": "Shipping Details (Consignee)",
+                    "style": "sectionHeader"
+                  },
+                  {
+                    "text": "a",
+                    "style": "addressName"
+                  },
+                  {
+                    "text": "a"
+                  },
+                  {
+                    "text": "Contact: null",
+                    "style": "gstInfo"
+                  }
+                ]
+              }
+            ]
+          ]
+        },
+        "layout": "lightHorizontalLines"
+      },
+      {
+        "style": "itemsTable",
+        "table": {
+          "headerRows": 0,
+          "widths": [
+            "auto",
+            "*",
+            "auto",
+            "auto",
+            "auto",
+            "auto"
+          ],
+          "body": [
+            [
+              {
+                "text": "Sr No.",
+                "style": "tableHeader",
+                "alignment": "left"
+              },
+              {
+                "text": "Description of Goods",
+                "style": "tableHeader",
+                "alignment": "center"
+              },
+              {
+                "text": "Price",
+                "style": "tableHeader",
+                "alignment": "center"
+              },
+              {
+                "text": "Quantity",
+                "style": "tableHeader",
+                "alignment": "center"
+              },
+              {
+                "text": "HSN\nGST %",
+                "style": "tableHeader",
+                "alignment": "center"
+              },
+              {
+                "text": "Amount",
+                "style": "tableHeader",
+                "alignment": "center"
+              }
+            ],
+            [
+              {
+                "text": 1,
+                "alignment": "left",
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "table": {
+                  "widths": [
+                    "*"
+                  ],
+                  "body": [
+                    [
+                      {
+                        "stack": [
+                          {
+                            "stack": [
+                              {
+                                "text": [
+                                  {
+                                    "text": "24-3-SN",
+                                    "bold": true,
+                                    "font": "Montserrat"
+                                  }
+                                ],
+                                "fontSize": 10,
+                                "bold": false,
+                                "marginBottom": 2,
+                                "font": "Montserrat"
+                              }
+                            ],
+                            "alignment": "left"
+                          },
+                          {
+                            "text": "",
+                            "style": "smaller"
+                          },
+                          {
+                            "text": "S/N : 243sn1",
+                            "style": "smaller"
+                          },
+                          {
+                            "text": "Warehouse: Main Warehouse",
+                            "style": "smaller"
+                          }
+                        ],
+                        "alignment": "left"
+                      }
+                    ]
+                  ]
+                },
+                "layout": "noBorders",
+                "alignment": "left"
+              },
+              {
+                "text": "₹200/-",
+                "alignment": "center",
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "text": "1 Nos.",
+                "alignment": "center",
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "text": "1111\n18% GST",
+                "alignment": "center",
+                "font": "Montserrat",
+                "fontSize": 7
+              },
+              {
+                "text": "₹200/-",
+                "alignment": "center",
+                "font": "Montserrat",
+                "fontSize": 8
+              }
+            ],
+            [
+              {
+                "text": 2,
+                "alignment": "left",
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "table": {
+                  "widths": [
+                    "*"
+                  ],
+                  "body": [
+                    [
+                      {
+                        "stack": [
+                          {
+                            "stack": [
+                              {
+                                "text": [
+                                  {
+                                    "text": "Underground to Overhead Tank Water Lifting",
+                                    "bold": true,
+                                    "font": "Montserrat"
+                                  }
+                                ],
+                                "fontSize": 10,
+                                "bold": false,
+                                "marginBottom": 2,
+                                "font": "Montserrat"
+                              },
+                              {
+                                "text": "Submersible Pump with Automation",
+                                "fontSize": 8,
+                                "margin": [
+                                  0,
+                                  0,
+                                  0,
+                                  1
+                                ],
+                                "font": "Montserrat"
+                              },
+                              {
+                                "text": [
+                                  {
+                                    "text": "System includes:",
+                                    "decoration": "underline",
+                                    "font": "Montserrat"
+                                  }
+                                ],
+                                "fontSize": 8,
+                                "margin": [
+                                  0,
+                                  0,
+                                  0,
+                                  1
+                                ],
+                                "font": "Montserrat"
+                              },
+                              {
+                                "text": [
+                                  {
+                                    "text": "+ 24-3-SN",
+                                    "bold": true,
+                                    "font": "Montserrat"
+                                  },
+                                  " ",
+                                  {
+                                    "text": "(1 nos.)",
+                                    "decoration": "underline",
+                                    "font": "Montserrat"
+                                  }
+                                ],
+                                "fontSize": 8,
+                                "margin": [
+                                  0,
+                                  0,
+                                  0,
+                                  1
+                                ],
+                                "font": "Montserrat"
+                              }
+                            ],
+                            "alignment": "left"
+                          },
+                          {
+                            "text": "(12 Months Warranty)",
+                            "style": "smaller"
+                          },
+                          {
+                            "text": [],
+                            "style": "smaller"
+                          },
+                          {
+                            "text": "",
+                            "style": "smaller"
+                          }
+                        ],
+                        "alignment": "left"
+                      }
+                    ]
+                  ]
+                },
+                "layout": "noBorders",
+                "alignment": "left"
+              },
+              {
+                "text": "₹200/-",
+                "alignment": "center",
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "text": "1 Nos",
+                "alignment": "center",
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "text": "234567\n18% GST",
+                "alignment": "center",
+                "font": "Montserrat",
+                "fontSize": 7
+              },
+              {
+                "text": "₹200/-",
+                "alignment": "center",
+                "font": "Montserrat",
+                "fontSize": 8
+              }
+            ]
+          ]
+        }
+      },
+      {
+        "table": {
+          "widths": [
+            "*",
+            "auto"
+          ],
+          "body": [
+            [
+              "",
+              {
+                "table": {
+                  "widths": [
+                    "auto",
+                    "auto"
+                  ],
+                  "body": [
+                    [
+                      {
+                        "text": "Total",
+                        "bold": true,
+                        "font": "Montserrat",
+                        "fontSize": 8
+                      },
+                      {
+                        "text": "₹400/-",
+                        "bold": true,
+                        "font": "Montserrat",
+                        "fontSize": 8
+                      }
+                    ],
+                    [
+                      {
+                        "text": "GST",
+                        "font": "Montserrat",
+                        "fontSize": 8
+                      },
+                      {
+                        "table": {
+                          "widths": [
+                            "auto",
+                            "auto"
+                          ],
+                          "body": [
+                            [
+                              {
+                                "text": "CGST 9%",
+                                "font": "Montserrat",
+                                "fontSize": 7,
+                                "italics": true
+                              },
+                              {
+                                "text": "₹36/-",
+                                "font": "Montserrat",
+                                "fontSize": 7,
+                                "italics": true
+                              }
+                            ],
+                            [
+                              {
+                                "text": "SGST 9%",
+                                "font": "Montserrat",
+                                "fontSize": 7,
+                                "italics": true
+                              },
+                              {
+                                "text": "₹36/-",
+                                "font": "Montserrat",
+                                "fontSize": 7,
+                                "italics": true
+                              }
+                            ]
+                          ]
+                        },
+                        "layout": "noBorders"
+                      }
+                    ],
+                    [
+                      {
+                        "text": "Total GST",
+                        "bold": true,
+                        "font": "Montserrat",
+                        "fontSize": 8
+                      },
+                      {
+                        "text": "₹72/-",
+                        "bold": true,
+                        "font": "Montserrat",
+                        "fontSize": 8
+                      }
+                    ],
+                    [
+                      {
+                        "text": "Grand Total",
+                        "bold": true,
+                        "font": "Montserrat",
+                        "fontSize": 10
+                      },
+                      {
+                        "text": "₹472/-",
+                        "bold": true,
+                        "font": "Montserrat",
+                        "fontSize": 10
+                      }
+                    ]
+                  ]
+                },
+                "layout": "lightHorizontalLines"
+              }
+            ]
+          ]
+        },
+        "layout": "noBorders",
+        "margin": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "text": [
+          {
+            "text": "Amount Receivable (in words)",
+            "style": "label"
+          },
+          {
+            "text": "E. & O.E\n",
+            "style": "label",
+            "alignment": "right"
+          },
+          {
+            "text": "INR Four Hundred And Seventy Two",
+            "style": "amountWords"
+          }
+        ],
+        "margin": [
+          0,
+          5,
+          0,
+          10
+        ]
+      },
+      {
+        "text": "HSN Calculations",
+        "font": "Montserrat",
+        "fontSize": 10,
+        "bold": true,
+        "alignment": "center",
+        "margin": [
+          0,
+          10,
+          0,
+          5
+        ]
+      },
+      {
+        "table": {
+          "headerRows": 1,
+          "widths": [
+            "*",
+            "auto",
+            "auto",
+            "auto",
+            "auto",
+            "auto"
+          ],
+          "body": [
+            [
+              {
+                "text": "HSN/SAC",
+                "bold": true,
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "text": "Taxable Value",
+                "bold": true,
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "text": "CGST Rate",
+                "bold": true,
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "text": "CGST Amount",
+                "bold": true,
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "text": "SGST Rate",
+                "bold": true,
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "text": "SGST Amount",
+                "bold": true,
+                "font": "Montserrat",
+                "fontSize": 8
+              }
+            ],
+            [
+              {
+                "text": "1111",
+                "font": "Montserrat",
+                "fontSize": 7
+              },
+              {
+                "text": "₹200/-",
+                "font": "Montserrat",
+                "fontSize": 7
+              },
+              {
+                "text": "9 %",
+                "font": "Montserrat",
+                "fontSize": 7
+              },
+              {
+                "text": "₹18/-",
+                "font": "Montserrat",
+                "fontSize": 7
+              },
+              {
+                "text": "9 %",
+                "font": "Montserrat",
+                "fontSize": 7
+              },
+              {
+                "text": "₹18/-",
+                "font": "Montserrat",
+                "fontSize": 7
+              }
+            ],
+            [
+              {
+                "text": "234567",
+                "font": "Montserrat",
+                "fontSize": 7
+              },
+              {
+                "text": "₹200/-",
+                "font": "Montserrat",
+                "fontSize": 7
+              },
+              {
+                "text": "9 %",
+                "font": "Montserrat",
+                "fontSize": 7
+              },
+              {
+                "text": "₹18/-",
+                "font": "Montserrat",
+                "fontSize": 7
+              },
+              {
+                "text": "9 %",
+                "font": "Montserrat",
+                "fontSize": 7
+              },
+              {
+                "text": "₹18/-",
+                "font": "Montserrat",
+                "fontSize": 7
+              }
+            ],
+            [
+              {
+                "text": "Total",
+                "bold": true,
+                "alignment": "right",
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "text": "₹400/-",
+                "bold": true,
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "text": "",
+                "bold": true,
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "text": "₹36/-",
+                "bold": true,
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "text": "",
+                "bold": true,
+                "font": "Montserrat",
+                "fontSize": 8
+              },
+              {
+                "text": "₹36/-",
+                "bold": true,
+                "font": "Montserrat",
+                "fontSize": 8
+              }
+            ]
+          ]
+        },
+        "margin": [
+          0,
+          5,
+          0,
+          15
+        ]
+      },
+      {
+        "table": {
+          "widths": [
+            "*"
+          ],
+          "body": [
+            [
+              {
+                "stack": [
+                  {
+                    "text": "\n",
+                    "fontSize": 8,
+                    "margin": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "font": "Montserrat"
+                  }
+                ],
+                "alignment": "left"
+              }
+            ]
+          ]
+        },
+        "layout": "noBorders",
+        "margin": [
+          20,
+          10,
+          28,
+          10
+        ]
+      },
+      {
+        "table": {
+          "widths": [
+            "*"
+          ],
+          "body": [
+            [
+              {
+                "stack": [
+                  {
+                    "text": "BLA BLA",
+                    "fontSize": 8,
+                    "margin": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ],
+                    "font": "Montserrat"
+                  },
+                  {
+                    "text": [
+                      {
+                        "text": "\n"
+                      }
+                    ],
+                    "fontSize": 8,
+                    "margin": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ],
+                    "font": "Montserrat"
+                  },
+                  {
+                    "text": [
+                      "Thank you for co",
+                      {
+                        "text": "nsidering Devyami ",
+                        "bold": true
+                      },
+                      "for your water solution needs. We are a one-stop water solution firm that offers customised and innovative solutions for your unique requirements."
+                    ],
+                    "fontSize": 8,
+                    "margin": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ],
+                    "font": "Montserrat"
+                  },
+                  {
+                    "text": [
+                      {
+                        "text": "\n"
+                      }
+                    ],
+                    "fontSize": 8,
+                    "margin": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ],
+                    "font": "Montserrat"
+                  },
+                  {
+                    "text": [
+                      "With over tw",
+                      {
+                        "text": "o decades of experience, we are experts in providing a wide range of water related devices and systems, which covers",
+                        "bold": true
+                      }
+                    ],
+                    "fontSize": 8,
+                    "margin": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ],
+                    "font": "Montserrat"
+                  },
+                  {
+                    "ol": [
+                      {
+                        "text": [
+                          {
+                            "text": "pumping solutions,",
+                            "bold": true
+                          }
+                        ],
+                        "fontSize": 8,
+                        "marginLeft": 5,
+                        "font": "Montserrat"
+                      },
+                      {
+                        "text": [
+                          {
+                            "text": "water heating solutions,",
+                            "bold": true
+                          }
+                        ],
+                        "fontSize": 8,
+                        "marginLeft": 5,
+                        "font": "Montserrat"
+                      },
+                      {
+                        "text": [
+                          {
+                            "text": "\n"
+                          }
+                        ],
+                        "fontSize": 8,
+                        "marginLeft": 5,
+                        "font": "Montserrat"
+                      }
+                    ],
+                    "fontSize": 8,
+                    "font": "Montserrat"
+                  },
+                  {
+                    "ul": [
+                      {
+                        "text": [
+                          {
+                            "text": "swimming pool solutions,",
+                            "bold": true
+                          }
+                        ],
+                        "fontSize": 8,
+                        "marginLeft": 5,
+                        "font": "Montserrat"
+                      },
+                      {
+                        "text": [
+                          {
+                            "text": "water treatment",
+                            "bold": true
+                          }
+                        ],
+                        "fontSize": 8,
+                        "marginLeft": 5,
+                        "font": "Montserrat"
+                      }
+                    ],
+                    "fontSize": 8,
+                    "marginBottom": 0,
+                    "font": "Montserrat"
+                  },
+                  {
+                    "text": "\n",
+                    "fontSize": 8,
+                    "margin": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "font": "Montserrat"
+                  },
+                  {
+                    "ul": [
+                      {
+                        "text": [
+                          {
+                            "text": "filtration syst",
+                            "bold": true
+                          },
+                          "ems, and automation systems."
+                        ],
+                        "fontSize": 8,
+                        "marginLeft": 5,
+                        "font": "Montserrat"
+                      }
+                    ],
+                    "fontSize": 8,
+                    "marginBottom": 0,
+                    "font": "Montserrat"
+                  },
+                  {
+                    "text": [
+                      {
+                        "text": "\n"
+                      }
+                    ],
+                    "fontSize": 8,
+                    "margin": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ],
+                    "font": "Montserrat"
+                  },
+                  {
+                    "text": [
+                      "Our team of experts is dedicated to delivering the high",
+                      {
+                        "text": "est level of service, support, and maintenance, ensuring that your water system operates efficiently and reliably. We offer competitive pricing and quick turnaround times, making us the preferred choice for customers across the region.",
+                        "decoration": "underline"
+                      }
+                    ],
+                    "fontSize": 8,
+                    "margin": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ],
+                    "font": "Montserrat"
+                  },
+                  {
+                    "text": [
+                      {
+                        "text": "\n"
+                      }
+                    ],
+                    "fontSize": 8,
+                    "margin": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ],
+                    "font": "Montserrat"
+                  },
+                  {
+                    "text": [
+                      "At Devyami, we believe that water is one of the most precious resources on the planet and our products and services are designed to help you conserve water while enjoying its many benefits. We provide comprehensive solution",
+                      {
+                        "text": "s, from initial consultat",
+                        "bold": true
+                      },
+                      "ion and system design to installation and after-sales service."
+                    ],
+                    "fontSize": 8,
+                    "margin": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ],
+                    "font": "Montserrat"
+                  }
+                ],
+                "alignment": "left"
+              }
+            ]
+          ]
+        },
+        "layout": "noBorders",
+        "margin": [
+          20,
+          10,
+          28,
+          10
+        ]
+      },
+      {
+        "margin": [
+          0,
+          10,
+          0,
+          10
+        ],
+        "stack": [
+          {
+            "stack": [
+              {
+                "text": "Declaration",
+                "style": "sectionHeader"
+              },
+              {
+                "text": "We declare that this document shows the actual price of the goods described and that all particulars are true and correct.",
+                "style": "declaration",
+                "margin": [
+                  0,
+                  5,
+                  0,
+                  10
+                ]
+              }
+            ]
+          },
+          {
+            "columnGap": 12,
+            "columns": [
+              {
+                "width": "*",
+                "stack": [
+                  {
+                    "text": "Payment Details",
+                    "style": "sectionHeader",
+                    "margin": [
+                      20,
+                      0,
+                      0,
+                      5
+                    ]
+                  },
+                  {
+                    "table": {
+                      "headerRows": 0,
+                      "widths": "auto",
+                      "body": [
+                        [
+                          {
+                            "text": "Account Name",
+                            "font": "Montserrat",
+                            "fontSize": 7,
+                            "color": "#444"
+                          },
+                          {
+                            "text": "Devyami Automatic Pumps & Controls Pvt. Ltd.",
+                            "font": "Montserrat",
+                            "fontSize": 8,
+                            "bold": true,
+                            "color": "#444"
+                          }
+                        ],
+                        [
+                          {
+                            "text": "Account Number",
+                            "font": "Montserrat",
+                            "fontSize": 7,
+                            "color": "#444"
+                          },
+                          {
+                            "text": "250330110000007",
+                            "font": "Montserrat",
+                            "fontSize": 8,
+                            "bold": true,
+                            "color": "#444"
+                          }
+                        ],
+                        [
+                          {
+                            "text": "Bank Name",
+                            "font": "Montserrat",
+                            "fontSize": 7,
+                            "color": "#444"
+                          },
+                          {
+                            "text": "Bank of India",
+                            "font": "Montserrat",
+                            "fontSize": 8,
+                            "bold": true,
+                            "color": "#444"
+                          }
+                        ],
+                        [
+                          {
+                            "text": "IFSC Code",
+                            "font": "Montserrat",
+                            "fontSize": 7,
+                            "color": "#444"
+                          },
+                          {
+                            "text": "BKID0002503",
+                            "font": "Montserrat",
+                            "fontSize": 8,
+                            "bold": true,
+                            "color": "#444"
+                          }
+                        ],
+                        [
+                          {
+                            "text": "Branch Name",
+                            "font": "Montserrat",
+                            "fontSize": 7,
+                            "color": "#444"
+                          },
+                          {
+                            "text": "R.V Desai Road (Vadodara)",
+                            "font": "Montserrat",
+                            "fontSize": 8,
+                            "bold": true,
+                            "color": "#444"
+                          }
+                        ],
+                        [
+                          {
+                            "text": "GST IN",
+                            "font": "Montserrat",
+                            "fontSize": 7,
+                            "color": "#444"
+                          },
+                          {
+                            "text": "24AACCD7417K1ZN",
+                            "font": "Montserrat",
+                            "fontSize": 8,
+                            "bold": true,
+                            "color": "#444"
+                          }
+                        ]
+                      ]
+                    },
+                    "margin": [
+                      20,
+                      0,
+                      0,
+                      10
+                    ],
+                    "layout": {}
+                  }
+                ]
+              },
+              {
+                "width": "auto",
+                "stack": [
+                  {
+                    "image": "private/assets/not_approved_stamp.png",
+                    "fit": [
+                      100,
+                      100
+                    ],
+                    "alignment": "center",
+                    "margin": [
+                      0,
+                      0,
+                      0,
+                      5
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "appendPdfPaths": [],
+  "originalFileName": "INV-26030019_v4_null.pdf",
+  "uploadUrl": "https://devyami-misc.s3.ap-south-1.amazonaws.com/INV-26030019_v4_null.pdf?Content-Type=application%2Fpdf&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAYZOXYHM6YOZX2DNZ%2F20260421%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20260421T111735Z&X-Amz-Expires=600&X-Amz-Signature=173c7977b099cc0bd84f59fc0487b0ec8537591bf769f5dc9c3db2b736046121&X-Amz-SignedHeaders=host%3Bx-amz-storage-class&x-amz-storage-class=ONEZONE_IA"
+}
