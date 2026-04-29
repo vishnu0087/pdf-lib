@@ -3,7 +3,6 @@
   "formatVersion": 1,
   "meta": {
     "title": "Invoice",
-    "source": "invoice-data1.json (same body pipeline as Sales s-data1.json; shell background as Quote data1.json / pdf-background.png)",
     "pagesIncluded": [
       1,
       2

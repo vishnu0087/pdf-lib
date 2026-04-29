@@ -2,39 +2,630 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>PDF</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PDF generator</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f2ef;
+        --card: #fff;
+        --border: #e2ddd6;
+        --text: #1a1a1a;
+        --muted: #5c574f;
+        --accent: #c45c26;
+        --accent-dim: #e8d5cc;
+        --danger: #b00020;
+        --ok: #2e7d32;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .wrap {
+        max-width: 36rem;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 3rem;
+      }
+      h1 {
+        font-size: 1.35rem;
+        font-weight: 650;
+        margin: 0 0 0.25rem;
+        letter-spacing: -0.02em;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin: 0 0 1.75rem;
+      }
+      .steps {
+        display: flex;
+        gap: 0.35rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+      .steps span {
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        background: var(--border);
+      }
+      .steps span.on {
+        background: var(--accent);
+        color: #fff;
+      }
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.35rem 1.25rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+      }
+      fieldset {
+        border: none;
+        margin: 0;
+        padding: 0;
+      }
+      legend {
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin-bottom: 0.85rem;
+      }
+      .opts {
+        display: grid;
+        gap: 0.5rem;
+      }
+      .opt {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.65rem 0.85rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: border-color 0.12s, background 0.12s;
+      }
+      .opt:hover {
+        border-color: #c4bcb2;
+      }
+      .opt:has(input:checked) {
+        border-color: var(--accent);
+        background: var(--accent-dim);
+      }
+      .opt input {
+        accent-color: var(--accent);
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-top: 1.25rem;
+        align-items: center;
+      }
+      button {
+        font: inherit;
+        padding: 0.55rem 1.1rem;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      button.primary {
+        background: var(--accent);
+        color: #fff;
+      }
+      button.primary:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      button.ghost {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--border);
+      }
+      .drop {
+        border: 2px dashed var(--border);
+        border-radius: 10px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .drop input[type='file'] {
+        margin-top: 0.75rem;
+        max-width: 100%;
+      }
+      .hint {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 0.75rem;
+      }
+      .msg {
+        margin-top: 1rem;
+        padding: 0.65rem 0.85rem;
+        border-radius: 8px;
+        font-size: 0.88rem;
+      }
+      .msg.err {
+        background: #ffebee;
+        color: var(--danger);
+      }
+      .msg.ok {
+        background: #e8f5e9;
+        color: var(--ok);
+      }
+      .hidden {
+        display: none !important;
+      }
+    </style>
   </head>
   <body>
-    <p>
-      <button type="button" id="btn">Quote</button>
-      <button type="button" id="btn-sales">Sales</button>
-      <button type="button" id="btn-invoice">Invoice</button>
-      <button type="button" id="btn-salary">Salary</button>
-    </p>
+    <div class="wrap">
+      <h1>Generate PDF</h1>
+      <p class="sub">
+        Pick a doc type and JSON, choose a PDF template — then tweak it visually before
+        you download or save your own reusable style (stored under new-template/).
+      </p>
+
+      <div class="steps" id="steps-indicator" aria-hidden="true">
+        <span class="on" data-step="1">1 · Type</span>
+        <span data-step="2">2 · Data</span>
+        <span data-step="3">3 · Template</span>
+      </div>
+
+      <div class="panel">
+        <!-- Step 1 -->
+        <section id="step-1" class="step">
+          <fieldset>
+            <legend>Document type</legend>
+            <div class="opts">
+              <label class="opt">
+                <input type="radio" name="docType" value="quote" />
+                Quote
+              </label>
+              <label class="opt">
+                <input type="radio" name="docType" value="invoice" />
+                Invoice
+              </label>
+              <label class="opt">
+                <input type="radio" name="docType" value="salary" />
+                Salary
+              </label>
+              <label class="opt">
+                <input type="radio" name="docType" value="sales" />
+                Sales
+              </label>
+            </div>
+          </fieldset>
+          <div class="row">
+            <button type="button" class="primary" id="btn-next-1" disabled>
+              Next
+            </button>
+          </div>
+        </section>
+
+        <!-- Step 2 -->
+        <section id="step-2" class="step hidden">
+          <fieldset>
+            <legend>Upload JSON</legend>
+            <p style="margin: 0 0 0.75rem; font-size: 0.9rem; color: var(--muted)">
+              File must match
+              <strong id="step2-kind-label">the selected</strong> Puppeteer JSON format
+              (same schema as the sample files in this project).
+            </p>
+            <div class="drop">
+              <div>Choose a <code>.json</code> file</div>
+              <input
+                type="file"
+                id="json-file"
+                accept=".json,application/json"
+              />
+            </div>
+            <p class="hint">
+              The file must not be empty. The server checks structure and that the
+              renderer accepts your data before you can continue.
+            </p>
+          </fieldset>
+          <div id="step2-msg"></div>
+          <div class="row">
+            <button type="button" class="ghost" id="btn-back-2">Back</button>
+            <button type="button" class="primary" id="btn-next-2" disabled>
+              Next
+            </button>
+          </div>
+        </section>
+
+        <!-- Step 3 -->
+        <section id="step-3" class="step hidden">
+          <fieldset>
+            <legend>Template</legend>
+            <div id="template-radio-group" class="opts"></div>
+            <p class="hint" id="template-hint">
+              Use the built‑in layout (<code>pdf/</code>), or a saved customization in
+              <code>new-template/</code>.
+              Customize opens a Word‑style editor in a new tab; Download uses your
+              latest edits there when they match this data.
+            </p>
+          </fieldset>
+          <div class="row" style="margin-top: 1rem">
+            <button type="button" class="ghost" id="btn-toggle-custom">
+              Customize template…
+            </button>
+          </div>
+          <div class="row">
+            <button type="button" class="ghost" id="btn-back-3">Back</button>
+            <button type="button" class="primary" id="btn-download">
+              Download PDF
+            </button>
+          </div>
+          <div id="step3-msg"></div>
+        </section>
+      </div>
+    </div>
+
     <script>
-      async function downloadPdf(url, filename) {
-        const res = await fetch(url);
-        if (!res.ok) return;
-        const blob = await res.blob();
-        const href = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = href;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(href);
+      const DOC_LABELS = {
+        quote: 'Quote',
+        invoice: 'Invoice',
+        salary: 'Salary',
+        sales: 'Sales',
+      };
+
+      const state = {
+        step: 1,
+        docType: null,
+        data: null,
+        /** `'default'` or saved template id */
+        templatePick: 'default',
+      };
+
+      let uploadedForDocType = null;
+
+      /** Same fingerprint convention as template editor (snapshots survive new tabs via localStorage). */
+      function pdfEditorFingerprint() {
+        return `${state.docType || ''}-${JSON.stringify(state.data ?? {}).slice(0, 80)}-${(state.data &&
+          state.data.format) ||
+          ''}`;
       }
-      document.getElementById('btn').addEventListener('click', () => {
-        downloadPdf('/api/pdf', 'document.pdf');
+
+      function clearEditorStorage() {
+        try {
+          localStorage.removeItem('pdfEditorLiveHtml');
+          localStorage.removeItem('pdfEditorLiveDocType');
+          localStorage.removeItem('pdfEditorFingerprint');
+          localStorage.removeItem('pdfTemplateEditorBootstrap');
+        } catch (_) {}
+      }
+
+      const $ = (id) => document.getElementById(id);
+
+      const stepEls = [$('step-1'), $('step-2'), $('step-3')];
+      const indicatorSpans = document.querySelectorAll('.steps span');
+
+      function showStep(n) {
+        state.step = n;
+        stepEls.forEach((el, i) => {
+          el.classList.toggle('hidden', i + 1 !== n);
+        });
+        indicatorSpans.forEach((span) => {
+          span.classList.toggle('on', span.dataset.step === String(n));
+        });
+        if (n === 2 && state.docType) {
+          $('step2-kind-label').textContent = DOC_LABELS[state.docType] || state.docType;
+        }
+        if (n === 3 && state.docType) {
+          rebuildTemplateRadios();
+        }
+      }
+
+      function sanitizeClientLiveHtml(html) {
+        return String(html)
+          .replace(/<script\b[\s\S]*?<\/script>/gi, '')
+          .replace(/<iframe\b[\s\S]*?<\/iframe>/gi, '');
+      }
+
+      function isUsableLiveHtmlSnapshot(s) {
+        return (
+          typeof s === 'string' &&
+          s.length > 400 &&
+          /<html[\s>]/i.test(s) &&
+          /<\/html>/i.test(s)
+        );
+      }
+
+      function liveHtmlFromEditorTab() {
+        const fp = localStorage.getItem('pdfEditorFingerprint');
+        const doc = localStorage.getItem('pdfEditorLiveDocType');
+        const raw = localStorage.getItem('pdfEditorLiveHtml');
+        if (
+          !raw ||
+          doc !== state.docType ||
+          fp !== pdfEditorFingerprint() ||
+          !isUsableLiveHtmlSnapshot(raw)
+        )
+          return '';
+        return sanitizeClientLiveHtml(raw);
+      }
+
+      /** Rebuild radios: default template + saved files for this document type. */
+      async function rebuildTemplateRadios() {
+        const doc = state.docType;
+        const box = $('template-radio-group');
+        if (!doc || !box) return;
+        box.innerHTML = '';
+        let list = [];
+        try {
+          const res = await fetch(
+            `/api/custom-templates?docType=${encodeURIComponent(doc)}`
+          );
+          list = await res.json();
+          if (!res.ok || !Array.isArray(list)) list = [];
+        } catch {
+          list = [];
+        }
+
+        /** @type {Array<{ label: string, value: string }>} */
+        const opts = [];
+        opts.push({
+          label: `Default (${DOC_LABELS[doc] || doc})`,
+          value: 'default',
+        });
+        for (const t of list) {
+          opts.push({
+            label: `Saved · ${String(t.name || t.id)}`,
+            value: t.id,
+          });
+        }
+
+        if (
+          state.templatePick &&
+          state.templatePick !== 'default' &&
+          !list.some((x) => x.id === state.templatePick)
+        ) {
+          state.templatePick = 'default';
+        }
+
+        opts.forEach((opt) => {
+          const lbl = document.createElement('label');
+          lbl.className = 'opt';
+          const inp = document.createElement('input');
+          inp.type = 'radio';
+          inp.name = 'templatePick';
+          inp.value = opt.value;
+          lbl.appendChild(inp);
+          lbl.appendChild(document.createTextNode(' ' + opt.label));
+          box.appendChild(lbl);
+        });
+
+        Array.from(box.querySelectorAll('input[name="templatePick"]')).forEach((el) => {
+          el.checked = el.value === (state.templatePick || 'default');
+        });
+      }
+
+
+      $('step-3').addEventListener('change', (ev) => {
+        const el = ev.target;
+        if (el && el.name === 'templatePick')
+          state.templatePick = /** @type {HTMLInputElement} */ (el).value;
       });
-      document.getElementById('btn-sales').addEventListener('click', () => {
-        downloadPdf('/api/pdf-sales', 'sales-order.pdf');
+
+      function openTemplateEditorTab() {
+        clearMsg('step3-msg');
+        if (!state.data || !state.docType) {
+          setMsg(
+            'step3-msg',
+            'Upload valid JSON first, then open Customize.',
+            'err'
+          );
+          return;
+        }
+        const bootstrap = {
+          docType: state.docType,
+          data: state.data,
+          templatePick: state.templatePick || 'default',
+        };
+        try {
+          localStorage.setItem(
+            'pdfTemplateEditorBootstrap',
+            JSON.stringify(bootstrap)
+          );
+        } catch (_) {
+          setMsg(
+            'step3-msg',
+            'JSON is too large for the editor session in this browser. Try a smaller file.',
+            'err'
+          );
+          return;
+        }
+        window.open('/template-editor/', '_blank', 'noopener');
+      }
+
+      $('btn-toggle-custom').addEventListener('click', openTemplateEditorTab);
+
+      window.addEventListener('message', (ev) => {
+        if (!ev.data || ev.data.type !== 'pdf-template-saved') return;
+        if (ev.data.id) state.templatePick = ev.data.id;
+        rebuildTemplateRadios();
       });
-      document.getElementById('btn-invoice').addEventListener('click', () => {
-        downloadPdf('/api/pdf-invoice', 'invoice.pdf');
+
+      function clearMsg(id) {
+        const el = $(id);
+        el.innerHTML = '';
+        el.className = '';
+      }
+
+      function setMsg(id, text, kind) {
+        const el = $(id);
+        el.textContent = text;
+        el.className = 'msg ' + (kind || '');
+      }
+
+      document.querySelectorAll('input[name="docType"]').forEach((input) => {
+        input.addEventListener('change', () => {
+          $('btn-next-1').disabled = !document.querySelector(
+            'input[name="docType"]:checked'
+          );
+        });
       });
-      document.getElementById('btn-salary').addEventListener('click', () => {
-        downloadPdf('/api/pdf-salary', 'salary-slip.pdf');
+
+      $('btn-next-1').addEventListener('click', () => {
+        const sel = document.querySelector('input[name="docType"]:checked');
+        if (!sel) return;
+        const nextType = sel.value;
+        if (uploadedForDocType !== nextType) {
+          state.data = null;
+          uploadedForDocType = null;
+          $('json-file').value = '';
+          $('btn-next-2').disabled = true;
+          clearMsg('step2-msg');
+        }
+        state.docType = nextType;
+        state.templatePick = 'default';
+        clearEditorStorage();
+        showStep(2);
       });
+
+      $('btn-back-2').addEventListener('click', () => {
+        clearMsg('step2-msg');
+        showStep(1);
+      });
+
+      $('btn-back-3').addEventListener('click', () => {
+        clearMsg('step3-msg');
+        showStep(2);
+      });
+
+      async function validateWithServer(data) {
+        const res = await fetch('/api/validate-pdf-json', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ docType: state.docType, data }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          return { ok: false, error: body.error || res.statusText || 'Validation failed' };
+        }
+        return { ok: true };
+      }
+
+      $('json-file').addEventListener('change', async (ev) => {
+        $('btn-next-2').disabled = true;
+        state.data = null;
+        clearEditorStorage();
+        clearMsg('step2-msg');
+        const file = ev.target.files && ev.target.files[0];
+        if (!file) return;
+
+        if (file.size === 0) {
+          setMsg('step2-msg', 'File is empty. Choose a non-empty JSON file.', 'err');
+          return;
+        }
+
+        let text;
+        try {
+          text = await file.text();
+        } catch {
+          setMsg('step2-msg', 'Could not read the file.', 'err');
+          return;
+        }
+
+        if (!text.trim()) {
+          setMsg('step2-msg', 'File has no JSON content.', 'err');
+          return;
+        }
+
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          setMsg('step2-msg', 'Invalid JSON: ' + (e.message || String(e)), 'err');
+          return;
+        }
+
+        if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+          setMsg(
+            'step2-msg',
+            'JSON root must be an object (not an array or null).',
+            'err'
+          );
+          return;
+        }
+
+        const v = await validateWithServer(data);
+        if (!v.ok) {
+          setMsg('step2-msg', v.error, 'err');
+          return;
+        }
+
+        state.data = data;
+        uploadedForDocType = state.docType;
+        setMsg('step2-msg', 'Data is valid. You can continue.', 'ok');
+        $('btn-next-2').disabled = false;
+      });
+
+      $('btn-next-2').addEventListener('click', () => {
+        if (!state.data) return;
+        clearMsg('step2-msg');
+        showStep(3);
+      });
+
+      async function downloadPdf() {
+        clearMsg('step3-msg');
+        const btn = $('btn-download');
+        btn.disabled = true;
+        try {
+          const liveHtml = liveHtmlFromEditorTab();
+
+          const res = await fetch('/api/pdf-generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              docType: state.docType,
+              data: state.data,
+              templateId:
+                state.templatePick && state.templatePick !== 'default'
+                  ? state.templatePick
+                  : undefined,
+              ...(liveHtml ? { liveHtml } : {}),
+            }),
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            setMsg(
+              'step3-msg',
+              err.error || 'PDF generation failed.',
+              'err'
+            );
+            return;
+          }
+          const blob = await res.blob();
+          const cd = res.headers.get('Content-Disposition');
+          let name = 'document.pdf';
+          if (cd) {
+            const m = /filename="([^"]+)"/.exec(cd);
+            if (m) name = m[1];
+          }
+          const href = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = href;
+          a.download = name;
+          a.click();
+          URL.revokeObjectURL(href);
+        } catch (e) {
+          setMsg('step3-msg', String(e.message || e), 'err');
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      $('btn-download').addEventListener('click', downloadPdf);
     </script>
   </body>
 </html>

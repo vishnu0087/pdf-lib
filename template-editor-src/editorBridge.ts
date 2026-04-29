@@ -1,0 +1,384 @@
+/** Iframe DOM + persistence bridge (no JSX). Puppeteer consumes saved HTML verbatim. */
+
+export const FONT_PT_SIZES: number[] = [];
+for (let s = 8; s <= 36; s++) FONT_PT_SIZES.push(s);
+
+export function normalizeColorForInput(c: unknown, fallback: string): string {
+  if (!c || typeof c !== 'string') return fallback;
+  const t = c.trim();
+  if (/^#[0-9a-f]{6}$/i.test(t)) return t;
+  if (/^#[0-9a-f]{3}$/i.test(t) && t.length === 4) {
+    const [, a, b, d] = t;
+    return `#${a}${a}${b}${b}${d}${d}`;
+  }
+  return fallback;
+}
+
+export function sanitizeHtml(html: string): string {
+  return String(html)
+    .replace(/<script\b[\s\S]*?<\/script>/gi, '')
+    .replace(/<iframe\b[\s\S]*?<\/iframe>/gi, '');
+}
+
+/** @public for tests */
+export function pickHeaderCells(
+  docEl: Document,
+  dt: string
+): HTMLElement[] {
+  if (!docEl || dt === 'salary') return [];
+  if (dt === 'quote') {
+    const tr = docEl.querySelector('.quote-table thead tr');
+    return tr ? Array.from(tr.querySelectorAll(':scope > td')) : [];
+  }
+  if (dt === 'sales' || dt === 'invoice') {
+    const tbl =
+      docEl.querySelector('.qt-sales-main-items-wrap .qt-html-table') ||
+      docEl.querySelector('.p2-after-table .qt-html-table');
+    if (!tbl) return [];
+    let tr = tbl.querySelector('thead tr');
+    if (!tr) tr = tbl.querySelector('tbody tr');
+    return tr
+      ? Array.from(tr.querySelectorAll(':scope > td'))
+      : [];
+  }
+  return [];
+}
+
+export function syncHeadersIntoDraft(
+  doc: Document | null | undefined,
+  docType: string,
+  draft: Record<string, unknown>
+): Record<string, unknown> {
+  if (!doc || docType === 'salary') return draft;
+  const cells = pickHeaderCells(doc, docType);
+  if (!cells.length) return draft;
+  const texts = cells.map((td) =>
+    String(td.innerText || '')
+      .replace(/\r\n/g, '\n')
+      .replace(/\u00a0/g, ' ')
+      .trimEnd()
+  );
+  const next = { ...draft };
+  if (docType === 'quote') {
+    next.quote = { ...(typeof next.quote === 'object' && next.quote ? next.quote : {}), columnHeaders: texts };
+  } else if (docType === 'sales' || docType === 'invoice') {
+    next.afterTableItems = {
+      ...(typeof next.afterTableItems === 'object' && next.afterTableItems ? next.afterTableItems : {}),
+      columnHeaders: texts,
+    };
+  }
+  return next;
+}
+
+export function applyThemeStyleBlock(
+  d: Document | null | undefined,
+  bodyFs: number,
+  bodyColor: string,
+  bodyFontStack: string,
+  thFs: number,
+  thFill: string,
+  thFg: string
+): void {
+  if (!d || !d.head) return;
+  let tag = d.getElementById('tpl-user-live-theme');
+  if (!tag) {
+    tag = d.createElement('style');
+    tag.id = 'tpl-user-live-theme';
+    d.head.appendChild(tag);
+  }
+  const fam = String(bodyFontStack || 'Montserrat, sans-serif');
+  tag.textContent = `
+    html { color: ${bodyColor}; box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: inherit; }
+    body, .sheet-inner--p2, .p2-quote-line-items-shell .quote-table-wrap {
+      font-family: ${fam};
+    }
+    .sheet-inner--p2 { font-size: ${bodyFs}pt; }
+    .sheet-inner--p1 { font-size: ${Math.max(bodyFs, 8)}pt; }
+    table.quote-table thead td,
+    .quote-table.quote-table thead td,
+    .qt-sales-main-items-wrap .qt-html-table thead td,
+    .qt-html-table thead td,
+    .qt-html-table tbody > tr:first-child td {
+      font-size: ${thFs}pt;
+      background-color: ${thFill};
+      color: ${thFg};
+    }
+    img { max-width: 100%; height: auto; vertical-align: middle; }
+  `.trim();
+}
+
+export function updateLiveThemeCssFromDraft(
+  d: Document | null | undefined,
+  draft: Record<string, unknown>
+): void {
+  const ds = /** @type {Record<string, unknown>} */ (
+    (draft.document && typeof draft.document === 'object' && draft.document && 'defaultStyle' in draft.document
+      ? (draft.document as { defaultStyle?: Record<string, unknown> }).defaultStyle
+      : {}) || {}
+  );
+  const styles = draft.document &&
+    typeof draft.document === 'object' &&
+    draft.document !== null &&
+    'styles' in draft.document &&
+    typeof (draft.document as { styles?: unknown }).styles === 'object' &&
+    (draft.document as { styles?: Record<string, unknown> }).styles
+    ? (draft.document as { styles: Record<string, unknown> }).styles
+    : {};
+  const th = /** @type {Record<string, unknown>} */ (
+    (styles.tableHeader && typeof styles.tableHeader === 'object' ? styles.tableHeader : {}) || {}
+  );
+  applyThemeStyleBlock(
+    d,
+    Number(ds.fontSize) || 8,
+    normalizeColorForInput(ds.color != null ? String(ds.color) : undefined, '#212121'),
+    String(ds.fontFamily || 'Montserrat, sans-serif'),
+    Number(th.fontSize) || 7,
+    normalizeColorForInput(th.fillColor != null ? String(th.fillColor) : undefined, '#ffb74d'),
+    normalizeColorForInput(th.color != null ? String(th.color) : undefined, '#333333')
+  );
+}
+
+export function buildSyncOverridesFromRibbonInput(
+  prev: Record<string, unknown>,
+  rib: { fontSizePt: number; fontFamily: string; color: string }
+): Record<string, unknown> {
+  const next = { ...prev };
+  const docPrev =
+    next.document &&
+    typeof next.document === 'object' &&
+    next.document !== null
+      ? { ...(next.document as Record<string, unknown>) }
+      : {};
+
+  const prevDs =
+    docPrev.defaultStyle &&
+    typeof docPrev.defaultStyle === 'object' &&
+    docPrev.defaultStyle !== null
+      ? { ...(docPrev.defaultStyle as Record<string, unknown>) }
+      : {};
+
+  const stylesPrev =
+    docPrev.styles && typeof docPrev.styles === 'object' && docPrev.styles !== null
+      ? { ...(docPrev.styles as Record<string, unknown>) }
+      : {};
+
+  const prevThRaw = stylesPrev.tableHeader;
+  const prevTh =
+    typeof prevThRaw === 'object' && prevThRaw !== null
+      ? { ...(prevThRaw as Record<string, unknown>) }
+      : {};
+
+  stylesPrev.tableHeader = {
+    ...prevTh,
+    fontSize: typeof prevTh.fontSize === 'number' ? prevTh.fontSize : 7,
+    fillColor: typeof prevTh.fillColor === 'string' ? prevTh.fillColor : '#ffb74d',
+    color: typeof prevTh.color === 'string' ? prevTh.color : '#333333',
+  };
+
+  docPrev.defaultStyle = {
+    ...prevDs,
+    fontSize: rib.fontSizePt,
+    color: rib.color,
+    fontFamily: rib.fontFamily,
+  };
+  docPrev.styles = stylesPrev;
+  next.document = docPrev;
+  return next;
+}
+
+export function persistLiveHtmlToLocalStorage(
+  iframe: HTMLIFrameElement | null,
+  docType: string,
+  data: unknown
+): void {
+  if (
+    !iframe?.contentDocument?.documentElement ||
+    !iframe.src ||
+    iframe.src.indexOf('about:blank') === 0
+  )
+    return;
+  const html = sanitizeHtml(
+    iframe.contentDocument.documentElement.outerHTML
+  );
+  if (html.length > 400) {
+    try {
+      localStorage.setItem('pdfEditorLiveHtml', html);
+      localStorage.setItem('pdfEditorLiveDocType', docType || '');
+      localStorage.setItem(
+        'pdfEditorFingerprint',
+        `${docType}-${JSON.stringify(data ?? {}).slice(0, 80)}-${(data && typeof data === 'object' && 'format' in (data as object) && (data as { format?: unknown }).format) || ''}`
+      );
+    } catch (_) {
+      /* quota */
+    }
+  }
+}
+
+export function focusIframeDoc(iframe: HTMLIFrameElement | null): void {
+  const w = iframe?.contentWindow;
+  if (w?.focus) w.focus();
+}
+
+export function selectionCollapsed(iframe: HTMLIFrameElement | null): boolean {
+  const d = iframe?.contentDocument;
+  if (!d?.getSelection) return true;
+  const sel = d.getSelection();
+  return !sel!.rangeCount || !!sel!.isCollapsed;
+}
+
+export function applyFontStyleToInlineSelection(
+  iframe: HTMLIFrameElement | null,
+  css: { fontSize?: string; fontFamily?: string; color?: string }
+): boolean {
+  const d = iframe?.contentDocument;
+  const w = iframe?.contentWindow;
+  if (!d || !w || !css) return false;
+  focusIframeDoc(iframe);
+  const sel = d.getSelection();
+  if (!sel?.rangeCount || sel.isCollapsed) return false;
+  const span = d.createElement('span');
+  if (css.fontSize)
+    span.style.fontSize = css.fontSize.includes('pt')
+      ? css.fontSize
+      : `${css.fontSize}pt`;
+  if (css.fontFamily) span.style.fontFamily = css.fontFamily;
+  if (css.color) span.style.color = css.color;
+  const range = sel.getRangeAt(0);
+  try {
+    range.surroundContents(span);
+  } catch (_) {
+    const frag = range.extractContents();
+    span.appendChild(frag);
+    range.insertNode(span);
+  }
+  sel.removeAllRanges();
+  return true;
+}
+
+export function runCmd(
+  iframe: HTMLIFrameElement | null,
+  cmd: string,
+  val: string | null = null,
+  schedule: () => void
+): void {
+  const dw = iframe?.contentWindow;
+  if (!dw) return;
+  try {
+    dw.focus();
+    if (val != null) dw.document.execCommand(cmd, false, val);
+    else dw.document.execCommand(cmd, false, null);
+  } catch (_) {
+    /* */
+  }
+  schedule();
+}
+
+export function getTableContextFromCaret(iframe: HTMLIFrameElement | null): {
+  cell: HTMLElement | null;
+  table: HTMLElement | null;
+} {
+  const d = iframe?.contentDocument;
+  focusIframeDoc(iframe);
+  if (!d?.getSelection || !d.getSelection().rangeCount)
+    return { cell: null, table: null };
+  let n = d.getSelection()?.anchorNode as Node | null;
+  if (!n) return { cell: null, table: null };
+  if (n.nodeType === Node.TEXT_NODE) n = (n.parentElement as Node | null)!;
+  const el =
+    n && (n as Node).nodeType === Node.ELEMENT_NODE
+      ? (n as HTMLElement)
+      : null;
+  const cell = el?.closest?.('td') || el?.closest?.('th') || null;
+  const table =
+    cell && cell.closest?.('table') ? (cell.closest('table') as HTMLElement) : null;
+  return { cell, table };
+}
+
+export function insertTableMarkup(rows: number, cols: number): string {
+  let html = `
+<table style="border-collapse:collapse;width:100%;margin:12px 0;border:1px solid #bdbdbd;">
+<tbody>`;
+  for (let r = 0; r < rows; r++) {
+    html += '<tr>';
+    for (let c = 0; c < cols; c++)
+      html +=
+        '<td style="border:1px solid #c8c6c4;padding:6px 8px;min-height:28px;vertical-align:top;">​</td>';
+    html += '</tr>';
+  }
+  html += `</tbody></table><p>\u200b</p>`;
+  return html.trim();
+}
+
+export function wireDesignMode(iframe: HTMLIFrameElement): void {
+  const d = iframe.contentDocument;
+  if (!d?.body) return;
+  try {
+    (d as Document & { designMode?: string }).designMode = 'on';
+  } catch (_) {
+    /* */
+  }
+  try {
+    d.execCommand('styleWithCSS', false, true);
+  } catch (_) {
+    /* */
+  }
+  try {
+    d.execCommand('defaultParagraphSeparator', false, 'p');
+  } catch (_) {
+    /* */
+  }
+
+  let ui = d.getElementById('tpl-word-ui');
+  if (!ui) {
+    ui = d.createElement('style');
+    ui.id = 'tpl-word-ui';
+    d.head?.appendChild(ui);
+  }
+  ui.textContent = `
+    [contenteditable=true] td, [contenteditable=true] th { min-height: 1em; vertical-align: top; }
+    [contenteditable=true] img { max-width: 100%; height: auto; vertical-align: middle; }
+  `;
+
+  Array.from(d.querySelectorAll('img')).forEach((img) => {
+    try {
+      (img as HTMLImageElement).contentEditable = 'false';
+      img.draggable = false;
+    } catch (_) {
+      /* */
+    }
+  });
+}
+
+export function observeNewImages(
+  iframe: HTMLIFrameElement,
+  onAny: () => void
+): () => void {
+  const d = iframe.contentDocument?.body;
+  if (!d) return () => {};
+  const obs = new MutationObserver((records) => {
+    let touched = false;
+    records.forEach((rec) => {
+      rec.addedNodes.forEach((node) => {
+        if (node.nodeType !== Node.ELEMENT_NODE) return;
+        const el = node as HTMLElement;
+        const imgs =
+          el.tagName === 'IMG'
+            ? [el as HTMLImageElement]
+            : Array.from(el.querySelectorAll?.('img') ?? []);
+        imgs.forEach((img) => {
+          try {
+            img.contentEditable = 'false';
+            img.draggable = false;
+          } catch (_) {
+            /* */
+          }
+          touched = true;
+        });
+      });
+    });
+    if (touched) onAny();
+  });
+  obs.observe(d, { childList: true, subtree: true });
+  return () => obs.disconnect();
+}
