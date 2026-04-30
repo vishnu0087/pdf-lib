@@ -5,17 +5,19 @@
   "type": "module",
   "scripts": {
     "build:pdf-css": "node ./pdf/build-print-css.mjs",
-    "build:editor": "vite build --config vite.template-editor.config.ts",
+    "build:editor": "vite build --config vite.template-editor.config.ts && node ./copy-tinymce.mjs",
     "prestart": "npm run build:pdf-css && npm run build:editor",
     "start": "node --import tsx server.js"
   },
   "dependencies": {
     "@fontsource/montserrat": "^5.2.8",
+    "@tinymce/tinymce-react": "^6.3.0",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "puppeteer": "^24.6.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "tinymce": "^8.5.0",
     "tsx": "^4.19.3"
   },
   "devDependencies": {

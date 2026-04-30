@@ -125,9 +125,11 @@ export function updateLiveThemeCssFromDraft(
     (draft.document as { styles?: Record<string, unknown> }).styles
     ? (draft.document as { styles: Record<string, unknown> }).styles
     : {};
-  const th = /** @type {Record<string, unknown>} */ (
-    (styles.tableHeader && typeof styles.tableHeader === 'object' ? styles.tableHeader : {}) || {}
-  );
+  const thRaw = styles.tableHeader;
+  const th: Record<string, unknown> =
+    typeof thRaw === 'object' && thRaw !== null && !Array.isArray(thRaw)
+      ? { ...(thRaw as Record<string, unknown>) }
+      : {};
   applyThemeStyleBlock(
     d,
     Number(ds.fontSize) || 8,
@@ -187,6 +189,89 @@ export function buildSyncOverridesFromRibbonInput(
   return next;
 }
 
+export type TemplateHtmlParts = {
+  /** Starts at `<!DOCTYPE` or `<html` through end of opening `<body…>`. */
+  prefix: string;
+  /** From `</body>` through document end (includes `</html>`). */
+  suffix: string;
+  bodyInner: string;
+};
+
+/** Parse server PDF HTML so TinyMCE can edit `bodyInner` only while head/styles stay intact. */
+export function splitTemplateHtml(full: string): TemplateHtmlParts {
+  const trimmed = full.trim();
+  const closeIdx = trimmed.toLowerCase().lastIndexOf('</body>');
+  if (closeIdx === -1) {
+    return { prefix: '', suffix: '', bodyInner: full };
+  }
+  const openMatch = /<body\b[^>]*>/i.exec(trimmed);
+  if (!openMatch || openMatch.index === undefined) {
+    return {
+      prefix: '',
+      suffix: trimmed.slice(closeIdx),
+      bodyInner: trimmed.slice(0, closeIdx),
+    };
+  }
+  const openEnd = openMatch.index + openMatch[0].length;
+  return {
+    prefix: trimmed.slice(0, openEnd),
+    suffix: trimmed.slice(closeIdx),
+    bodyInner: trimmed.slice(openEnd, closeIdx),
+  };
+}
+
+export function mergeTemplateHtml(parts: TemplateHtmlParts): string {
+  if (!parts.prefix && !parts.suffix) return parts.bodyInner;
+  return `${parts.prefix}${parts.bodyInner}${parts.suffix}`;
+}
+
+/**
+ * TinyMCE's edit iframe only contains `body` HTML; re-inject `<head>` stylesheets
+ * and inline `<style>` from the PDF template so layout matches print/Puppeteer.
+ */
+export function injectPdfHeadIntoEditorDoc(
+  doc: Document,
+  prefixThroughBodyOpen: string
+): void {
+  const m = prefixThroughBodyOpen.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+  if (!m) return;
+  const inner = m[1];
+  const wrap = new DOMParser().parseFromString(
+    `<html><head>${inner}</head></html>`,
+    'text/html'
+  );
+  const dest = doc.head;
+  wrap.head.childNodes.forEach((node) => {
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    const el = node as HTMLElement;
+    const tag = el.tagName.toLowerCase();
+    if (tag === 'style') {
+      const s = doc.createElement('style');
+      s.textContent = el.textContent;
+      dest.appendChild(s);
+    } else if (tag === 'link' && el.getAttribute('rel') === 'stylesheet') {
+      const l = doc.createElement('link');
+      l.rel = 'stylesheet';
+      const href = el.getAttribute('href');
+      if (href) l.setAttribute('href', href);
+      dest.appendChild(l);
+    } else if (tag === 'base') {
+      const b = doc.createElement('base');
+      const href = el.getAttribute('href');
+      if (href) b.setAttribute('href', href);
+      dest.appendChild(b);
+    }
+  });
+}
+
+const LIVE_HTML_FINGERPRINT_DATA = (data: unknown) =>
+  `${JSON.stringify(data ?? {}).slice(0, 80)}-${(data &&
+    typeof data === 'object' &&
+    data &&
+    'format' in data &&
+    (data as { format?: unknown }).format) ||
+    ''}`;
+
 export function persistLiveHtmlToLocalStorage(
   iframe: HTMLIFrameElement | null,
   docType: string,
@@ -201,17 +286,31 @@ export function persistLiveHtmlToLocalStorage(
   const html = sanitizeHtml(
     iframe.contentDocument.documentElement.outerHTML
   );
-  if (html.length > 400) {
-    try {
-      localStorage.setItem('pdfEditorLiveHtml', html);
-      localStorage.setItem('pdfEditorLiveDocType', docType || '');
-      localStorage.setItem(
-        'pdfEditorFingerprint',
-        `${docType}-${JSON.stringify(data ?? {}).slice(0, 80)}-${(data && typeof data === 'object' && 'format' in (data as object) && (data as { format?: unknown }).format) || ''}`
-      );
-    } catch (_) {
-      /* quota */
-    }
+  persistLiveHtmlString(html, docType, data);
+}
+
+/** Persist merged full-document HTML (used by TinyMCE path). */
+export function persistLiveHtmlString(
+  html: string,
+  docType: string,
+  data: unknown
+): void {
+  const sanitized = sanitizeHtml(html);
+  if (
+    sanitized.length <= 400 ||
+    !/<html[\s>]/i.test(sanitized) ||
+    !/<\/html>/i.test(sanitized)
+  )
+    return;
+  try {
+    localStorage.setItem('pdfEditorLiveHtml', sanitized);
+    localStorage.setItem('pdfEditorLiveDocType', docType || '');
+    localStorage.setItem(
+      'pdfEditorFingerprint',
+      `${docType}-${LIVE_HTML_FINGERPRINT_DATA(data)}`
+    );
+  } catch (_) {
+    /* quota */
   }
 }
 
@@ -267,7 +366,7 @@ export function runCmd(
   try {
     dw.focus();
     if (val != null) dw.document.execCommand(cmd, false, val);
-    else dw.document.execCommand(cmd, false, null);
+    else dw.document.execCommand(cmd, false);
   } catch (_) {
     /* */
   }
@@ -280,7 +379,7 @@ export function getTableContextFromCaret(iframe: HTMLIFrameElement | null): {
 } {
   const d = iframe?.contentDocument;
   focusIframeDoc(iframe);
-  if (!d?.getSelection || !d.getSelection().rangeCount)
+  if (!d?.getSelection || !d.getSelection()?.rangeCount)
     return { cell: null, table: null };
   let n = d.getSelection()?.anchorNode as Node | null;
   if (!n) return { cell: null, table: null };
@@ -319,7 +418,7 @@ export function wireDesignMode(iframe: HTMLIFrameElement): void {
     /* */
   }
   try {
-    d.execCommand('styleWithCSS', false, true);
+    d.execCommand('styleWithCSS', false, 'true');
   } catch (_) {
     /* */
   }
@@ -336,8 +435,12 @@ export function wireDesignMode(iframe: HTMLIFrameElement): void {
     d.head?.appendChild(ui);
   }
   ui.textContent = `
-    [contenteditable=true] td, [contenteditable=true] th { min-height: 1em; vertical-align: top; }
-    [contenteditable=true] img { max-width: 100%; height: auto; vertical-align: middle; }
+    html { background: #fff; }
+    body { margin: 0; }
+    /* Design mode does not set contenteditable on nodes; keep rules global. */
+    table { border-collapse: collapse; }
+    td, th { min-height: 1em; vertical-align: top; }
+    img { max-width: 100%; height: auto; vertical-align: middle; }
   `;
 
   Array.from(d.querySelectorAll('img')).forEach((img) => {

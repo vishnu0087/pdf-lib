@@ -1,24 +1,20 @@
+import { Editor } from '@tinymce/tinymce-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import type { Editor as TinyEditor } from 'tinymce';
 import {
   FONT_PT_SIZES,
-  applyFontStyleToInlineSelection,
   buildSyncOverridesFromRibbonInput,
-  focusIframeDoc,
-  getTableContextFromCaret,
-  insertTableMarkup,
+  injectPdfHeadIntoEditorDoc,
+  mergeTemplateHtml,
   normalizeColorForInput as normColor,
-  observeNewImages,
-  persistLiveHtmlToLocalStorage,
-  runCmd,
+  persistLiveHtmlString,
   sanitizeHtml,
-  selectionCollapsed,
+  splitTemplateHtml,
+  type TemplateHtmlParts,
   syncHeadersIntoDraft,
   updateLiveThemeCssFromDraft,
-  wireDesignMode,
 } from './editorBridge';
-
-type TabName = 'home' | 'insert' | 'layout';
 
 const FONT_FAMILIES: { label: string; value: string }[] = [
   { label: 'Montserrat', value: 'Montserrat, sans-serif' },
@@ -43,28 +39,30 @@ function readBootstrap(): null | {
   }
 }
 
+function editorToolbarHeightPx(): number {
+  return Math.max(380, Math.min(920, window.innerHeight - 220));
+}
+
 export default function App() {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const imgInputRef = useRef<HTMLInputElement>(null);
-  const snapTm = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const unobs = useRef<(() => void) | null>(null);
+  const editorRef = useRef<TinyEditor | null>(null);
+  const templatePartsRef = useRef<TemplateHtmlParts | null>(null);
+  /** DOM lib uses numeric timer ids; avoid NodeJS.Timeout from mixed typings */
+  const snapTm = useRef<number | null>(null);
 
   const [error, setError] = useState<string | null>(null);
-  const [ribbonTab, setRibbonTab] = useState<TabName>('home');
   const [docType, setDocType] = useState('');
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const [busy, setBusy] = useState(true);
-  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
+  const [initialBody, setInitialBody] = useState<string | null>(null);
+  const [editorH, setEditorH] = useState(editorToolbarHeightPx);
 
   /** Snapshot of payload for fingerprint (stable after bootstrap). */
   const [snapshotData] = useState<unknown>(() => readBootstrap()?.data ?? null);
 
-  const [tblRows, setTblRows] = useState('3');
-  const [tblCols, setTblCols] = useState('4');
-  const [tblWidthPct, setTblWidthPct] = useState('');
-  const [cellW, setCellW] = useState('');
-  const [cellH, setCellH] = useState('');
-  const [cellBg, setCellBg] = useState('#ffffff');
+  const draftRef = useRef(draft);
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
 
   const rib = useMemo(() => {
     const ds =
@@ -93,35 +91,52 @@ export default function App() {
     return { fontSize: fs, fontFamily: famRaw, color: fg };
   }, [draft]);
 
-  const draftRef = useRef(draft);
-  useEffect(() => {
-    draftRef.current = draft;
-  }, [draft]);
-
   const scheduleSnapshot = useCallback(() => {
-    const iframe = iframeRef.current;
-    if (snapTm.current) clearTimeout(snapTm.current);
+    const ed = editorRef.current;
+    const parts = templatePartsRef.current;
+    if (!ed || !parts) return;
+    if (snapTm.current != null) window.clearTimeout(snapTm.current);
     snapTm.current = window.setTimeout(() => {
       snapTm.current = null;
-      persistLiveHtmlToLocalStorage(iframe, docType, snapshotData);
-    }, 380);
+      const inner = ed.getContent();
+      const full = mergeTemplateHtml({ ...parts, bodyInner: inner });
+      persistLiveHtmlString(full, docType, snapshotData);
+    }, 400);
   }, [docType, snapshotData]);
 
   const flushSnapshot = useCallback(() => {
-    persistLiveHtmlToLocalStorage(iframeRef.current, docType, snapshotData);
+    const ed = editorRef.current;
+    const parts = templatePartsRef.current;
+    if (!ed || !parts) return;
+    const inner = ed.getContent();
+    const full = mergeTemplateHtml({ ...parts, bodyInner: inner });
+    persistLiveHtmlString(full, docType, snapshotData);
   }, [docType, snapshotData]);
+
+  useEffect(() => {
+    const ed = editorRef.current;
+    if (!ed) return;
+    const container = ed.getContainer();
+    if (container) {
+      container.style.height = `${editorH}px`;
+      const ifr = ed.getContentAreaContainer()?.querySelector?.('iframe');
+      if (ifr instanceof HTMLIFrameElement) ifr.style.height = `${editorH}px`;
+    }
+  }, [editorH]);
+
+  useEffect(() => {
+    const onResize = () => setEditorH(editorToolbarHeightPx());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     async function boot() {
       const b = readBootstrap();
-      if (
-        !b ||
-        typeof b.docType !== 'string' ||
-        b.data == null
-      ) {
+      if (!b || typeof b.docType !== 'string' || b.data == null) {
         setError(
-          'Open this editor from Generate PDF · step 3 (Customize template).'
+          'Open this editor from the generator: Template → Edit layout.'
         );
         setBusy(false);
         return;
@@ -140,14 +155,38 @@ export default function App() {
             `/api/custom-templates/${encodeURIComponent(pick)}?docType=${encodeURIComponent(b.docType)}`
           );
           const disk = await r.json();
-          if (
-            r.ok &&
-            disk.overrides &&
-            disk.overrides._liveHtml &&
-            String(disk.overrides._liveHtml).length > 400
-          ) {
-            setDraft({ ...disk.overrides });
-            html = disk.overrides._liveHtml;
+          if (r.ok && disk.overrides && typeof disk.overrides === 'object') {
+            const liveRaw = disk.overrides._liveHtml;
+            const liveOk =
+              typeof liveRaw === 'string' && String(liveRaw).length > 400;
+            if (liveOk) {
+              setDraft({ ...disk.overrides });
+              html = String(liveRaw);
+            } else {
+              const overridesOnly = { ...disk.overrides } as Record<
+                string,
+                unknown
+              >;
+              delete overridesOnly._liveHtml;
+              setDraft(overridesOnly);
+              const pr = await fetch('/api/template-preview-html', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  docType: b.docType,
+                  data: b.data,
+                  overrides: overridesOnly,
+                }),
+              });
+              const jh = await pr.json().catch(() => ({}));
+              if (!pr.ok || cancelled) {
+                if (!cancelled)
+                  setError(jh.error || 'Could not render saved template.');
+                setBusy(false);
+                return;
+              }
+              html = jh.html;
+            }
           }
         } catch {
           /* */
@@ -191,16 +230,11 @@ export default function App() {
         html = jh.html;
       }
 
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      if (cancelled) {
-        URL.revokeObjectURL(url);
-        return;
-      }
-      setPreviewBlobUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return url;
-      });
+      if (cancelled) return;
+
+      const parts = splitTemplateHtml(html);
+      templatePartsRef.current = parts;
+      setInitialBody(parts.bodyInner);
       setBusy(false);
     }
 
@@ -211,114 +245,66 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    return () => {
-      if (previewBlobUrl) URL.revokeObjectURL(previewBlobUrl);
-    };
-  }, [previewBlobUrl]);
-
-  const mergeDraftFromRibbon = useCallback(
-    (patch: { fontSizePt: number; fontFamily: string; color: string }) => {
-      setDraft((prev) => buildSyncOverridesFromRibbonInput(prev, patch));
-    },
-    []
-  );
-
-  /** After iframe parses — wire design mode and observe */
-  const onIframeLoad = useCallback(() => {
-    const el = iframeRef.current;
-    if (!el?.contentDocument) return;
-    wireDesignMode(el);
-    updateLiveThemeCssFromDraft(el.contentDocument, draftRef.current);
-    unobs.current?.();
-    unobs.current = observeNewImages(el, scheduleSnapshot);
-    el.contentDocument.body?.addEventListener('input', scheduleSnapshot);
-    el.contentDocument.body?.addEventListener('mouseup', scheduleSnapshot);
-    el.contentDocument.body?.addEventListener('keyup', scheduleSnapshot);
-
-    flushSnapshot();
-    el.contentWindow?.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's')
-        e.preventDefault();
-    });
-  }, [flushSnapshot, scheduleSnapshot]);
-
-  /** Keep theme CSS aligned when overrides draft updates from API or ribbon */
-  useEffect(() => {
-    const d = iframeRef.current?.contentDocument;
-    if (d) updateLiveThemeCssFromDraft(d, draft);
+    const ed = editorRef.current;
+    if (ed) updateLiveThemeCssFromDraft(ed.getDoc(), draft);
   }, [draft]);
 
+  function withEditorTheme(
+    patch: { fontSizePt: number; fontFamily: string; color: string }
+  ) {
+    setDraft((prev) => {
+      const next = buildSyncOverridesFromRibbonInput(prev, patch);
+      const ed = editorRef.current;
+      const doc = ed?.getDoc();
+      if (doc) updateLiveThemeCssFromDraft(doc, next);
+      return next;
+    });
+  }
+
   function onFontFamilyChange(v: string) {
-    mergeDraftFromRibbon({
+    withEditorTheme({
       fontSizePt: rib.fontSize,
       fontFamily: v,
       color: rib.color,
     });
-    focusIframeDoc(iframeRef.current);
-    if (
-      iframeRef.current &&
-      !selectionCollapsed(iframeRef.current) &&
-      applyFontStyleToInlineSelection(iframeRef.current, {
-        fontSize: `${rib.fontSize}pt`,
-        fontFamily: v,
-        color: rib.color,
-      })
-    )
-      scheduleSnapshot();
-    else {
-      updateLiveThemeCssFromDraft(
-        iframeRef.current?.contentDocument ?? null,
-        buildSyncOverridesFromRibbonInput(draft, {
-          fontSizePt: rib.fontSize,
-          fontFamily: v,
-          color: rib.color,
-        })
-      );
-      flushSnapshot();
-    }
+    const ed = editorRef.current;
+    if (!ed) return;
+    ed.focus();
+    const name = v.split(',')[0].trim().replace(/^['"]|['"]$/g, '');
+    ed.execCommand('FontName', false, name);
+    scheduleSnapshot();
   }
 
   function onFontSizeChange(v: string) {
     const n = Number(v) || 8;
-    mergeDraftFromRibbon({
+    withEditorTheme({
       fontSizePt: n,
       fontFamily: rib.fontFamily,
       color: rib.color,
     });
-    focusIframeDoc(iframeRef.current);
-    if (
-      iframeRef.current &&
-      !selectionCollapsed(iframeRef.current) &&
-      applyFontStyleToInlineSelection(iframeRef.current, {
-        fontSize: `${n}pt`,
-        fontFamily: rib.fontFamily,
-        color: rib.color,
-      })
-    )
-      scheduleSnapshot();
-    else {
-      updateLiveThemeCssFromDraft(
-        iframeRef.current?.contentDocument ?? null,
-        buildSyncOverridesFromRibbonInput(draft, {
-          fontSizePt: n,
-          fontFamily: rib.fontFamily,
-          color: rib.color,
-        })
-      );
-      flushSnapshot();
-    }
+    const ed = editorRef.current;
+    if (!ed) return;
+    ed.focus();
+    ed.execCommand('FontSize', false, `${n}pt`);
+    scheduleSnapshot();
   }
 
   async function handleSaveTemplate() {
     const name =
       typeof prompt === 'function' ? prompt('Save template as:', 'My template') : '';
     if (name === null || name === '') return;
-    let next = draft;
-    const iframe = iframeRef.current;
-    if (iframe?.contentDocument) {
-      next = syncHeadersIntoDraft(iframe.contentDocument, docType, draft);
-      setDraft(next);
-    }
+
+    const ed = editorRef.current;
+    const parts = templatePartsRef.current;
+    if (!ed || !parts) return;
+
+    const inner = ed.getContent();
+    const fullHtml = mergeTemplateHtml({ ...parts, bodyInner: inner });
+    const domDoc = new DOMParser().parseFromString(fullHtml, 'text/html');
+
+    let next = syncHeadersIntoDraft(domDoc, docType, draftRef.current);
+    setDraft(next);
+
     const mergedRibbon = buildSyncOverridesFromRibbonInput(next, {
       fontSizePt: rib.fontSize,
       fontFamily: rib.fontFamily,
@@ -327,10 +313,7 @@ export default function App() {
     const overrides = JSON.parse(
       JSON.stringify(mergedRibbon)
     ) as Record<string, unknown>;
-    if (iframe?.contentDocument?.documentElement)
-      overrides._liveHtml = sanitizeHtml(
-        iframe.contentDocument.documentElement.outerHTML
-      );
+    overrides._liveHtml = sanitizeHtml(fullHtml);
 
     try {
       const res = await fetch('/api/custom-templates', {
@@ -356,6 +339,27 @@ export default function App() {
     }
   }
 
+  const onEditorInit = useCallback(
+    (_evt: unknown, editor: TinyEditor) => {
+      editorRef.current = editor;
+      const parts = templatePartsRef.current;
+      if (parts?.prefix)
+        injectPdfHeadIntoEditorDoc(editor.getDoc(), parts.prefix);
+      updateLiveThemeCssFromDraft(editor.getDoc(), draftRef.current);
+      editor.on(
+        'change keyup SetContent Undo Redo ExecCommand ObjectResize',
+        scheduleSnapshot
+      );
+      editor.on('keydown', (e) => {
+        const ev = e as KeyboardEvent;
+        if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 's')
+          ev.preventDefault();
+      });
+      flushSnapshot();
+    },
+    [flushSnapshot, scheduleSnapshot]
+  );
+
   if (error) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-white px-4 text-center text-neutral-700">
@@ -376,7 +380,7 @@ export default function App() {
     );
   }
 
-  if (busy) {
+  if (busy || initialBody === null) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#faf9f8] text-neutral-600">
         <p className="text-sm">Loading template…</p>
@@ -384,438 +388,165 @@ export default function App() {
     );
   }
 
-  const tabCls = (t: TabName) =>
-    `rounded-t px-4 py-2 text-[13px] ${
-      ribbonTab === t
-        ? '-mb-px border border-b-white border-neutral-300 bg-white font-semibold text-neutral-900'
-        : 'border border-transparent text-neutral-600 hover:bg-white/70'
-    }`;
+  const ffList = FONT_FAMILIES.map(
+    (f) => `${f.label}=${f.value.split(',')[0].trim().replace(/^['"]|['"]$/g, '')}`
+  ).join('; ');
+
+  const fsList = FONT_PT_SIZES.map((n) => `${n}pt`).join(' ');
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#f3f2f1] text-[13px] text-neutral-800">
-      <header className="flex h-11 shrink-0 items-center gap-3 border-b border-neutral-300 bg-white px-3">
-        <span className="rounded-sm bg-[#185abd] px-4 py-[6px] text-xs font-semibold uppercase text-white">
+      <header className="flex shrink-0 items-center gap-3 border-b border-neutral-300 bg-white px-3 py-2">
+        <span className="shrink-0 rounded-sm bg-[#185abd] px-3 py-[6px] text-xs font-semibold uppercase text-white">
           PDF
         </span>
-        <h1 className="flex-1 text-[15px] font-semibold text-neutral-900">
-          {docType ? `${docType} · Template editor` : 'Template editor'}
-        </h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-[15px] font-semibold leading-snug text-neutral-900">
+            {docType ? `${docType} · Layout` : 'Template layout'}
+          </h1>
+          <p className="mt-0.5 text-[11px] leading-snug text-neutral-500">
+            Drag table edges and corners to resize columns and rows. Use the
+            toolbar for fonts, images, and structure. Theme defaults below sync
+            JSON overrides; the built-in default file is never overwritten until
+            you save a new template.
+          </p>
+        </div>
         <button
           type="button"
-          className="rounded-sm border border-neutral-400 bg-white px-3 py-[7px] text-xs font-semibold shadow-sm hover:bg-neutral-50"
+          className="shrink-0 rounded-sm border border-neutral-400 bg-white px-3 py-[7px] text-xs font-semibold shadow-sm hover:bg-neutral-50"
           onClick={handleSaveTemplate}
         >
           Save as new template…
         </button>
       </header>
 
-      <div className="shrink-0 border-b border-neutral-300 bg-[#f3f2f1]">
-        <div className="flex gap-0 pl-2 pt-[6px]">
-          <button
-            type="button"
-            className={tabCls('home')}
-            onClick={() => setRibbonTab('home')}
-          >
-            Home
-          </button>
-          <button
-            type="button"
-            className={tabCls('insert')}
-            onClick={() => setRibbonTab('insert')}
-          >
-            Insert
-          </button>
-          <button
-            type="button"
-            className={tabCls('layout')}
-            onClick={() => setRibbonTab('layout')}
-          >
-            Layout
-          </button>
+      <div className="shrink-0 border-b border-neutral-300 bg-white px-3 py-2">
+        <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
+          <Field label="Document theme · font">
+            <select
+              className="h-8 max-w-[9rem] min-w-[8.5rem] rounded-[2px] border border-neutral-500 bg-white px-1 text-[inherit]"
+              value={rib.fontFamily}
+              onChange={(e) => onFontFamilyChange(e.target.value)}
+            >
+              {FONT_FAMILIES.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Size (pt)">
+            <select
+              className="h-8 w-[4.25rem] rounded-[2px] border border-neutral-500 bg-white px-1 text-[inherit]"
+              value={String(rib.fontSize)}
+              onChange={(e) => onFontSizeChange(e.target.value)}
+            >
+              {FONT_PT_SIZES.map((n) => (
+                <option key={n} value={String(n)}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Theme text colour">
+            <input
+              type="color"
+              title="Applies to body theme + selection when changed"
+              value={normColor(rib.color, '#212121')}
+              onChange={(e) => {
+                const c = e.target.value;
+                withEditorTheme({
+                  fontSizePt: rib.fontSize,
+                  fontFamily: rib.fontFamily,
+                  color: c,
+                });
+                const ed = editorRef.current;
+                if (ed) {
+                  ed.focus();
+                  ed.execCommand('ForeColor', false, c);
+                }
+                scheduleSnapshot();
+              }}
+              className="h-[30px] w-[30px] cursor-pointer rounded border border-neutral-600 p-0"
+            />
+          </Field>
         </div>
-
-        {ribbonTab === 'home' && (
-          <div className="flex flex-wrap gap-x-5 gap-y-2 border-b border-neutral-300 bg-white px-3 py-[10px]">
-            <RibbonGroup label="Font">
-              <select
-                className="h-7 max-w-[9rem] min-w-[9rem] rounded-[2px] border border-neutral-500 bg-white px-1 text-[inherit]"
-                value={rib.fontFamily}
-                onChange={(e) => onFontFamilyChange(e.target.value)}
-              >
-                {FONT_FAMILIES.map((f) => (
-                  <option key={f.value} value={f.value}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="h-7 w-[4rem] min-w-[3.85rem] rounded-[2px] border border-neutral-500 bg-white px-1 text-[inherit]"
-                value={String(rib.fontSize)}
-                onChange={(e) => onFontSizeChange(e.target.value)}
-              >
-                {FONT_PT_SIZES.map((n) => (
-                  <option key={n} value={String(n)}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </RibbonGroup>
-            <RibbonGroup label="Basic">
-              <RibbonBtn
-                title="Bold"
-                onClick={() =>
-                  runCmd(iframeRef.current, 'bold', null, scheduleSnapshot)
-                }
-              >
-                <span className="font-black">B</span>
-              </RibbonBtn>
-              <RibbonBtn
-                title="Italic"
-                onClick={() =>
-                  runCmd(iframeRef.current, 'italic', null, scheduleSnapshot)
-                }
-              >
-                <span className="italic">I</span>
-              </RibbonBtn>
-              <RibbonBtn
-                title="Underline"
-                onClick={() =>
-                  runCmd(
-                    iframeRef.current,
-                    'underline',
-                    null,
-                    scheduleSnapshot
-                  )
-                }
-              >
-                <span className="underline">U</span>
-              </RibbonBtn>
-              <RibbonBtn
-                title="Strikethrough"
-                onClick={() =>
-                  runCmd(
-                    iframeRef.current,
-                    'strikeThrough',
-                    null,
-                    scheduleSnapshot
-                  )
-                }
-              >
-                <span className="line-through">S</span>
-              </RibbonBtn>
-            </RibbonGroup>
-            <RibbonGroup label="Paragraph">
-              <RibbonBtn
-                title="Left"
-                onClick={() =>
-                  runCmd(
-                    iframeRef.current,
-                    'justifyLeft',
-                    null,
-                    scheduleSnapshot
-                  )
-                }
-              >
-                ☰
-              </RibbonBtn>
-              <RibbonBtn
-                title="Center"
-                onClick={() =>
-                  runCmd(
-                    iframeRef.current,
-                    'justifyCenter',
-                    null,
-                    scheduleSnapshot
-                  )
-                }
-              >
-                ≡
-              </RibbonBtn>
-              <RibbonBtn
-                title="Right"
-                onClick={() =>
-                  runCmd(
-                    iframeRef.current,
-                    'justifyRight',
-                    null,
-                    scheduleSnapshot
-                  )
-                }
-              >
-                ☷
-              </RibbonBtn>
-              <RibbonBtn
-                title="Justify"
-                onClick={() =>
-                  runCmd(
-                    iframeRef.current,
-                    'justifyFull',
-                    null,
-                    scheduleSnapshot
-                  )
-                }
-              >
-                ▤
-              </RibbonBtn>
-            </RibbonGroup>
-            <RibbonGroup label="Colour">
-              <input
-                type="color"
-                title="Font colour"
-                value={normColor(rib.color, '#212121')}
-                onChange={(e) => {
-                  mergeDraftFromRibbon({
-                    fontSizePt: rib.fontSize,
-                    fontFamily: rib.fontFamily,
-                    color: e.target.value,
-                  });
-                  focusIframeDoc(iframeRef.current);
-                  if (
-                    iframeRef.current &&
-                    !selectionCollapsed(iframeRef.current)
-                  )
-                    applyFontStyleToInlineSelection(iframeRef.current, {
-                      color: e.target.value,
-                    });
-                  updateLiveThemeCssFromDraft(
-                    iframeRef.current?.contentDocument ?? null,
-                    buildSyncOverridesFromRibbonInput(draft, {
-                      fontSizePt: rib.fontSize,
-                      fontFamily: rib.fontFamily,
-                      color: e.target.value,
-                    })
-                  );
-                  flushSnapshot();
-                }}
-                className="h-[26px] w-[26px] cursor-pointer rounded border border-neutral-600 p-0"
-              />
-            </RibbonGroup>
-          </div>
-        )}
-
-        {ribbonTab === 'insert' && (
-          <div className="flex flex-wrap gap-x-5 gap-y-2 border-b border-neutral-300 bg-white px-3 py-[10px]">
-            <RibbonGroup label="Illustrations">
-              <button
-                type="button"
-                className="rounded-sm border border-neutral-400 bg-white px-3 py-[5px] text-xs font-semibold hover:bg-neutral-50"
-                onClick={() => imgInputRef.current?.click()}
-              >
-                Pictures
-              </button>
-              <input
-                ref={imgInputRef}
-                type="file"
-                accept="image/*,.svg"
-                aria-hidden="true"
-                tabIndex={-1}
-                className="sr-only"
-                onChange={(ev) => {
-                  const f = ev.target.files?.[0];
-                  ev.target.value = '';
-                  if (!f) return;
-                  const r = new FileReader();
-                  r.onload = () => {
-                    const uri = String(r.result);
-                    const iframe = iframeRef.current;
-                    focusIframeDoc(iframe);
-                    try {
-                      iframe?.contentWindow?.document.execCommand(
-                        'insertImage',
-                        false,
-                        uri
-                      );
-                    } catch {
-                      const esc = uri
-                        .replace(/&/g, '&amp;')
-                        .replace(/"/g, '&quot;');
-                      iframe?.contentWindow?.document.execCommand(
-                        'insertHTML',
-                        false,
-                        `<img alt="" src="${esc}" />`
-                      );
-                    }
-                    scheduleSnapshot();
-                  };
-                  r.readAsDataURL(f);
-                }}
-              />
-            </RibbonGroup>
-            <RibbonGroup label="Tables">
-              <label className="flex items-center gap-1">
-                <span className="text-[10px] text-neutral-500">Rows</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={30}
-                  className="h-7 w-14 rounded border border-neutral-500 px-1"
-                  value={tblRows}
-                  onChange={(ev) => setTblRows(ev.target.value)}
-                />
-              </label>
-              <label className="flex items-center gap-1">
-                <span className="text-[10px] text-neutral-500">Cols</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={20}
-                  className="h-7 w-14 rounded border border-neutral-500 px-1"
-                  value={tblCols}
-                  onChange={(ev) => setTblCols(ev.target.value)}
-                />
-              </label>
-              <button
-                type="button"
-                className="rounded-sm border border-neutral-400 bg-white px-3 py-[5px] text-xs font-semibold hover:bg-neutral-50"
-                onClick={() => {
-                  const rows = Math.min(30, Math.max(1, Number(tblRows) || 3));
-                  const cols = Math.min(20, Math.max(1, Number(tblCols) || 4));
-                  runCmd(
-                    iframeRef.current,
-                    'insertHTML',
-                    insertTableMarkup(rows, cols),
-                    scheduleSnapshot
-                  );
-                }}
-              >
-                Insert table
-              </button>
-            </RibbonGroup>
-          </div>
-        )}
-
-        {ribbonTab === 'layout' && (
-          <div className="flex flex-wrap gap-x-5 gap-y-2 border-b border-neutral-300 bg-white px-3 py-[10px]">
-            <RibbonGroup label="Table width">
-              <input
-                type="number"
-                placeholder="%"
-                className="h-7 w-16 rounded border border-neutral-500 px-1"
-                value={tblWidthPct}
-                onChange={(e) => setTblWidthPct(e.target.value)}
-              />
-              <button
-                type="button"
-                className="rounded-sm border border-neutral-400 bg-white px-2 py-[5px] text-xs font-semibold"
-                onClick={() => {
-                  const n = Number(tblWidthPct);
-                  const { table } = getTableContextFromCaret(iframeRef.current);
-                  if (!table) {
-                    alert('Put the caret inside a table.');
-                    return;
-                  }
-                  if (!Number.isFinite(n) || n < 10 || n > 100) return;
-                  table.style.width = `${n}%`;
-                  scheduleSnapshot();
-                }}
-              >
-                Apply
-              </button>
-            </RibbonGroup>
-            <RibbonGroup label="Cell size">
-              <input
-                className="h-7 w-[5.5rem] rounded border px-1"
-                placeholder="width"
-                value={cellW}
-                onChange={(e) => setCellW(e.target.value)}
-              />
-              <input
-                className="h-7 w-[5.5rem] rounded border px-1"
-                placeholder="height"
-                value={cellH}
-                onChange={(e) => setCellH(e.target.value)}
-              />
-              <button
-                type="button"
-                className="rounded-sm border border-neutral-400 bg-white px-2 py-[5px] text-xs font-semibold"
-                onClick={() => {
-                  const { cell } = getTableContextFromCaret(iframeRef.current);
-                  if (!cell) {
-                    alert('Put the caret inside a cell.');
-                    return;
-                  }
-                  if (cellW.trim()) cell.style.width = cellW.trim();
-                  if (cellH.trim()) cell.style.height = cellH.trim();
-                  scheduleSnapshot();
-                }}
-              >
-                Apply
-              </button>
-            </RibbonGroup>
-            <RibbonGroup label="Shading">
-              <input
-                type="color"
-                value={cellBg}
-                onChange={(e) => setCellBg(e.target.value)}
-                className="h-[26px] w-[26px] cursor-pointer rounded border border-neutral-600 p-0"
-              />
-              <button
-                type="button"
-                className="rounded-sm border border-neutral-400 bg-white px-2 py-[5px] text-xs font-semibold"
-                onClick={() => {
-                  const { cell } = getTableContextFromCaret(iframeRef.current);
-                  if (!cell) {
-                    alert('Put the caret inside a cell.');
-                    return;
-                  }
-                  cell.style.backgroundColor = cellBg;
-                  scheduleSnapshot();
-                }}
-              >
-                Fill cell
-              </button>
-            </RibbonGroup>
-          </div>
-        )}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-hidden bg-[#9e9e9e]">
-        <iframe
-          title="PDF template preview"
-          ref={iframeRef}
-          className="h-full w-full border-0 bg-[#808080]"
-          onLoad={onIframeLoad}
-          src={previewBlobUrl || undefined}
-        />
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-[#d9d9d9]">
+        <div className="flex min-h-full justify-center px-2 py-4">
+          <div
+            className="w-full shrink-0 overflow-hidden rounded-sm bg-[#e0e0e0] shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_4px_20px_rgba(0,0,0,0.18)]"
+            style={{
+              maxWidth: 'min(calc(210mm + 1.5rem), calc(100vw - 1rem))',
+            }}
+          >
+            <Editor
+              key={`${docType}-tpl`}
+              tinymceScriptSrc={`${import.meta.env.BASE_URL}tinymce/tinymce.min.js`}
+              licenseKey="gpl"
+              initialValue={initialBody}
+              init={{
+                height: editorH,
+                menubar: 'edit view insert format tools table',
+                promotion: false,
+                branding: false,
+                resize: true,
+                relative_urls: false,
+                remove_script_host: false,
+                convert_urls: false,
+                object_resizing: true,
+                plugins: [
+                  'advlist',
+                  'autolink',
+                  'lists',
+                  'link',
+                  'image',
+                  'charmap',
+                  'preview',
+                  'anchor',
+                  'searchreplace',
+                  'visualblocks',
+                  'code',
+                  'fullscreen',
+                  'insertdatetime',
+                  'media',
+                  'table',
+                  'help',
+                  'wordcount',
+                  'quickbars',
+                ],
+                toolbar:
+                  'undo redo | blocks | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image table | tableprops tablerowprops tablecellprops | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol | removeformat code fullscreen help',
+                table_toolbar:
+                  'tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol | tablecellprops tablerowprops',
+                table_cell_advtab: true,
+                table_row_advtab: true,
+                table_advtab: true,
+                quickbars_selection_toolbar:
+                  'bold italic | quicklink h2 h3 blockquote',
+                quickbars_insert_toolbar: 'quickimage quicktable',
+                font_family_formats: ffList,
+                fontsize_formats: fsList,
+                content_style:
+                  'body { margin: 0; padding: 0; } img { max-width: 100%; height: auto; }',
+              }}
+              onInit={onEditorInit}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function RibbonGroup({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex flex-col items-stretch gap-1">
-      <div className="flex flex-wrap items-center gap-1">{children}</div>
-      <span className="select-none text-center text-[10px] text-neutral-500">
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[10px] font-medium uppercase tracking-wide text-neutral-500">
         {label}
       </span>
-    </div>
-  );
-}
-
-function RibbonBtn({
-  children,
-  title,
-  onClick,
-}: {
-  title: string;
-  children: ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      title={title}
-      onClick={onClick}
-      className="flex h-7 min-w-[28px] items-center justify-center rounded-[2px] border border-transparent font-serif text-neutral-900 hover:border-neutral-400 hover:bg-neutral-200"
-    >
       {children}
-    </button>
+    </div>
   );
 }
