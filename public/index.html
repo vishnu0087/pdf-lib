@@ -235,6 +235,10 @@
               Edit layout…
             </button>
           </div>
+          <p style="font-size: 0.78rem; color: var(--muted); margin: 0.35rem 0 0">
+            Customize shows placeholders like &lt;CUSTOMER_NAME&gt; from field names;
+            your JSON replaces them when you download.
+          </p>
           <div id="step3-msg"></div>
           <div class="row">
             <button type="button" class="ghost" id="btn-back-3">Back</button>
@@ -494,8 +498,8 @@
 
       $('btn-customize').addEventListener('click', () => {
         clearMsg('step3-msg');
-        if (!state.data || !state.docType) {
-          setMsg('step3-msg', 'Need data.', 'err');
+        if (!state.docType) {
+          setMsg('step3-msg', 'Pick a document type first.', 'err');
           return;
         }
         try {
@@ -503,12 +507,11 @@
             'pdfTemplateEditorBootstrap',
             JSON.stringify({
               docType: state.docType,
-              data: state.data,
               templatePick: state.templatePick || 'default',
             })
           );
         } catch {
-          setMsg('step3-msg', 'File too large.', 'err');
+          setMsg('step3-msg', 'Storage failed.', 'err');
           return;
         }
         window.open('/template-editor/', '_blank', 'noopener');

@@ -27,7 +27,7 @@ const FONT_FAMILIES: { label: string; value: string }[] = [
 
 function readBootstrap(): null | {
   docType: string;
-  data: unknown;
+  data?: unknown;
   templatePick?: string;
 } {
   try {
@@ -56,8 +56,7 @@ export default function App() {
   const [initialBody, setInitialBody] = useState<string | null>(null);
   const [editorH, setEditorH] = useState(editorToolbarHeightPx);
 
-  /** Snapshot of payload for fingerprint (stable after bootstrap). */
-  const [snapshotData] = useState<unknown>(() => readBootstrap()?.data ?? null);
+  const snapshotRef = useRef<unknown>(null);
 
   const draftRef = useRef(draft);
   useEffect(() => {
@@ -100,9 +99,9 @@ export default function App() {
       snapTm.current = null;
       const inner = ed.getContent();
       const full = mergeTemplateHtml({ ...parts, bodyInner: inner });
-      persistLiveHtmlString(full, docType, snapshotData);
+      persistLiveHtmlString(full, docType, snapshotRef.current);
     }, 400);
-  }, [docType, snapshotData]);
+  }, [docType]);
 
   const flushSnapshot = useCallback(() => {
     const ed = editorRef.current;
@@ -110,8 +109,8 @@ export default function App() {
     if (!ed || !parts) return;
     const inner = ed.getContent();
     const full = mergeTemplateHtml({ ...parts, bodyInner: inner });
-    persistLiveHtmlString(full, docType, snapshotData);
-  }, [docType, snapshotData]);
+    persistLiveHtmlString(full, docType, snapshotRef.current);
+  }, [docType]);
 
   useEffect(() => {
     const ed = editorRef.current;
@@ -134,7 +133,7 @@ export default function App() {
     let cancelled = false;
     async function boot() {
       const b = readBootstrap();
-      if (!b || typeof b.docType !== 'string' || b.data == null) {
+      if (!b || typeof b.docType !== 'string') {
         setError(
           'Open this editor from the generator: Template → Edit layout.'
         );
@@ -142,6 +141,58 @@ export default function App() {
         return;
       }
       setDocType(b.docType);
+
+      let baseData: unknown = b.data;
+      if (baseData != null) {
+        try {
+          localStorage.removeItem('pdfEditorTokenMap');
+        } catch {
+          /* */
+        }
+      }
+      if (baseData == null) {
+        try {
+          const dr = await fetch(
+            `/api/placeholder-data?docType=${encodeURIComponent(b.docType)}`
+          );
+          const rawPayload = (await dr.json().catch(() => ({}))) as Record<
+            string,
+            unknown
+          >;
+          if (!dr.ok || cancelled) {
+            if (!cancelled)
+              setError(
+                ('error' in rawPayload
+                  ? String(rawPayload.error)
+                  : null) || 'Could not load layout placeholders.'
+              );
+            setBusy(false);
+            return;
+          }
+          const tokenMap = rawPayload.tokenMap;
+          const pdfPayload = { ...rawPayload };
+          delete pdfPayload.tokenMap;
+          baseData = pdfPayload;
+          try {
+            localStorage.setItem(
+              'pdfEditorTokenMap',
+              JSON.stringify({
+                docType: b.docType,
+                tokenMap:
+                  tokenMap && typeof tokenMap === 'object' ? tokenMap : {},
+              })
+            );
+          } catch {
+            /* */
+          }
+        } catch {
+          if (!cancelled) setError('Could not load layout placeholders.');
+          setBusy(false);
+          return;
+        }
+      }
+
+      snapshotRef.current = baseData;
 
       let html = '';
 
@@ -162,6 +213,17 @@ export default function App() {
             if (liveOk) {
               setDraft({ ...disk.overrides });
               html = String(liveRaw);
+              const tm = disk.overrides._placeholderTokenMap;
+              if (tm && typeof tm === 'object') {
+                try {
+                  localStorage.setItem(
+                    'pdfEditorTokenMap',
+                    JSON.stringify({ docType: b.docType, tokenMap: tm })
+                  );
+                } catch {
+                  /* */
+                }
+              }
             } else {
               const overridesOnly = { ...disk.overrides } as Record<
                 string,
@@ -174,7 +236,7 @@ export default function App() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   docType: b.docType,
-                  data: b.data,
+                  data: baseData,
                   overrides: overridesOnly,
                 }),
               });
@@ -199,7 +261,7 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             docType: b.docType,
-            data: b.data,
+            data: baseData,
           }),
         });
         const jr = await ex.json().catch(() => ({}));
@@ -217,7 +279,7 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             docType: b.docType,
-            data: b.data,
+            data: baseData,
             overrides: ov,
           }),
         });
@@ -316,6 +378,28 @@ export default function App() {
     overrides._liveHtml = sanitizeHtml(fullHtml);
 
     try {
+      const tRaw = localStorage.getItem('pdfEditorTokenMap');
+      if (tRaw) {
+        const parsed = JSON.parse(tRaw) as {
+          docType?: string;
+          tokenMap?: unknown;
+        };
+        if (
+          parsed.docType === docType &&
+          parsed.tokenMap &&
+          typeof parsed.tokenMap === 'object'
+        ) {
+          overrides._placeholderTokenMap = parsed.tokenMap as Record<
+            string,
+            string[]
+          >;
+        }
+      }
+    } catch {
+      /* */
+    }
+
+    try {
       const res = await fetch('/api/custom-templates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -405,10 +489,8 @@ export default function App() {
             {docType ? `${docType} · Layout` : 'Template layout'}
           </h1>
           <p className="mt-0.5 text-[11px] leading-snug text-neutral-500">
-            Drag table edges and corners to resize columns and rows. Use the
-            toolbar for fonts, images, and structure. Theme defaults below sync
-            JSON overrides; the built-in default file is never overwritten until
-            you save a new template.
+            Layout uses field placeholders like &lt;CUSTOMER_NAME&gt; (from JSON keys),
+            not your uploaded file. Saved templates fill those from your JSON on Download.
           </p>
         </div>
         <button
