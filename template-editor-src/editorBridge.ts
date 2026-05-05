@@ -95,11 +95,19 @@ export function applyThemeStyleBlock(
     }
     .sheet-inner--p2 { font-size: ${bodyFs}pt; }
     .sheet-inner--p1 { font-size: ${Math.max(bodyFs, 8)}pt; }
+    table.quote-table,
+    .qt-html-table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    table.quote-table td,
+    .qt-html-table td {
+      border: 1px solid #cfd8dc !important;
+    }
     table.quote-table thead td,
     .quote-table.quote-table thead td,
     .qt-sales-main-items-wrap .qt-html-table thead td,
-    .qt-html-table thead td,
-    .qt-html-table tbody > tr:first-child td {
+    .qt-html-table thead td {
       font-size: ${thFs}pt;
       background-color: ${thFill};
       color: ${thFg};
@@ -136,8 +144,8 @@ export function updateLiveThemeCssFromDraft(
     normalizeColorForInput(ds.color != null ? String(ds.color) : undefined, '#212121'),
     String(ds.fontFamily || 'Montserrat, sans-serif'),
     Number(th.fontSize) || 7,
-    normalizeColorForInput(th.fillColor != null ? String(th.fillColor) : undefined, '#ffb74d'),
-    normalizeColorForInput(th.color != null ? String(th.color) : undefined, '#333333')
+    normalizeColorForInput(th.fillColor != null ? String(th.fillColor) : undefined, '#eceff1'),
+    normalizeColorForInput(th.color != null ? String(th.color) : undefined, '#263238')
   );
 }
 
@@ -174,8 +182,8 @@ export function buildSyncOverridesFromRibbonInput(
   stylesPrev.tableHeader = {
     ...prevTh,
     fontSize: typeof prevTh.fontSize === 'number' ? prevTh.fontSize : 7,
-    fillColor: typeof prevTh.fillColor === 'string' ? prevTh.fillColor : '#ffb74d',
-    color: typeof prevTh.color === 'string' ? prevTh.color : '#333333',
+    fillColor: typeof prevTh.fillColor === 'string' ? prevTh.fillColor : '#eceff1',
+    color: typeof prevTh.color === 'string' ? prevTh.color : '#263238',
   };
 
   docPrev.defaultStyle = {

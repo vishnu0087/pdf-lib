@@ -19,6 +19,7 @@ import {
   applyTemplateOverrides,
   extractTemplateDefaults,
 } from './lib/pdf-template-customization.js';
+import { prepareFixtureForEditorVisualPreview } from './lib/editor-preview-payload.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -29,6 +30,8 @@ const TEMPLATE_EDITOR_INDEX = path.join(
   'template-editor',
   'index.html'
 );
+/** Each download is written here first, then the same bytes are sent to the client. */
+const GENERATED_PDF_DIR = path.join(ROOT, 'generated-pdfs');
 
 const FIXTURE_PATH = {
   quote: path.join(ROOT, 'fixtures', 'quote', 'data1.json'),
@@ -123,7 +126,23 @@ function clonePlaceholderPayload(raw) {
   function walk(node, pathParts) {
     if (node === null || typeof node !== 'object') return;
     if (Array.isArray(node)) {
-      node.forEach((item, i) => walk(item, [...pathParts, String(i)]));
+      const parentKey = pathParts[pathParts.length - 1] || '';
+      for (let i = 0; i < node.length; i++) {
+        const item = node[i];
+        if (typeof item === 'string') {
+          const keyForLabel =
+            parentKey === 'paragraphs'
+              ? `letterParagraphLine_${i}`
+              : `${parentKey}_${i}`;
+          if (!keepLiteralString(keyForLabel, item)) {
+            const body = nextPlaceholderBody(keyForLabel, counts);
+            tokenMap[body] = [...pathParts, String(i)].map(String);
+            node[i] = `<${body}>`;
+          }
+          continue;
+        }
+        walk(item, [...pathParts, String(i)]);
+      }
       return;
     }
     for (const k of Object.keys(node)) {
@@ -312,6 +331,7 @@ app.get('/api/placeholder-data', (req, res) => {
     return res.status(404).json({ error: 'Fixture missing.' });
   try {
     const raw = JSON.parse(fs.readFileSync(fp, 'utf8'));
+    prepareFixtureForEditorVisualPreview(docType, raw);
     const { payload, tokenMap } = clonePlaceholderPayload(raw);
     const struct = validatePdfJsonStructure(docType, payload);
     if (!struct.valid)
@@ -496,6 +516,9 @@ app.post('/api/pdf-generate', async (req, res) => {
       const html = htmlForDocType(docType, dataForPdf, listenPort);
       buf = await puppeteerHtmlToPdfBuffer(html, quoteLayout);
     }
+    const stem = path.basename(filename, path.extname(filename) || '.pdf');
+    const diskName = `${Date.now()}_${randomBytes(4).toString('hex')}_${stem}.pdf`;
+    await fs.promises.writeFile(path.join(GENERATED_PDF_DIR, diskName), buf);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(buf);
@@ -509,6 +532,7 @@ app.get(/^\/template-editor(?:\/|\.html)?$/i, serveTemplateEditorIndex);
 app.use(express.static(path.join(ROOT, 'public')));
 
 app.listen(listenPort, () => {
+  fs.mkdirSync(GENERATED_PDF_DIR, { recursive: true });
   console.log(`Open http://127.0.0.1:${listenPort}`);
   if (!fs.existsSync(TEMPLATE_EDITOR_INDEX))
     console.warn('\n⚠ Run npm run build:editor for /template-editor/\n');
