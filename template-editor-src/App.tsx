@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Editor as TinyEditor } from 'tinymce';
 import {
   FONT_PT_SIZES,
+  countEditorPages,
   injectEditorPagedScreenCss,
   injectPdfHeadIntoEditorDoc,
   mergeTemplateHtml,
@@ -14,6 +15,7 @@ import {
   updateLiveThemeCssFromDraft,
   wireTemplateImagesForEditor,
 } from './editorBridge';
+import { EditorStatusBar, EditorTopBar } from './EditorChrome';
 import {
   retokenizeEditorLiveHtml,
   substitutePlaceholdersInHtml,
@@ -46,6 +48,20 @@ export default function App() {
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const [busy, setBusy] = useState(true);
   const [initialBody, setInitialBody] = useState<string | null>(null);
+  const [pageCount, setPageCount] = useState(1);
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [templateName, setTemplateName] = useState('New template');
+
+  const recomputePages = useCallback(() => {
+    const ed = editorRef.current;
+    if (!ed) return;
+    try {
+      setPageCount(countEditorPages(ed.getDoc()));
+    } catch {
+      /* */
+    }
+  }, []);
 
   const snapshotRef = useRef<unknown>(null);
 
@@ -58,14 +74,16 @@ export default function App() {
     const ed = editorRef.current;
     const parts = templatePartsRef.current;
     if (!ed || !parts) return;
+    setDirty(true);
     if (snapTm.current != null) window.clearTimeout(snapTm.current);
     snapTm.current = window.setTimeout(() => {
       snapTm.current = null;
       const inner = ed.getContent();
       const full = mergeTemplateHtml({ ...parts, bodyInner: inner });
       persistLiveHtmlString(full, docType, snapshotRef.current);
+      recomputePages();
     }, 400);
-  }, [docType]);
+  }, [docType, recomputePages]);
 
   const flushSnapshot = useCallback(() => {
     const ed = editorRef.current;
@@ -158,8 +176,10 @@ export default function App() {
           const disk = await r.json();
           if (r.ok && disk.overrides && typeof disk.overrides === 'object') {
             editingTemplateIdRef.current = pick;
-            if (typeof disk.name === 'string')
+            if (typeof disk.name === 'string') {
               editingTemplateNameRef.current = disk.name;
+              setTemplateName(disk.name);
+            }
             const liveRaw = disk.overrides._liveHtml;
             const liveOk =
               typeof liveRaw === 'string' && String(liveRaw).length > 400;
@@ -327,6 +347,7 @@ export default function App() {
       /* */
     }
 
+    setSaving(true);
     try {
       let res: Response;
       if (updateId) {
@@ -348,6 +369,7 @@ export default function App() {
       const jr = await res.json();
       if (!res.ok) throw new Error(jr.error || 'Save failed');
       editingTemplateNameRef.current = jr.name || saveName;
+      setTemplateName(jr.name || saveName);
       if (!updateId && jr.id) editingTemplateIdRef.current = String(jr.id);
       try {
         if (window.opener && !window.opener.closed)
@@ -364,8 +386,11 @@ export default function App() {
           : `Saved as "${jr.name}". Choose it on step 3 in the wizard.`
       );
       flushSnapshot();
+      setDirty(false);
     } catch (e) {
       alert(String(e instanceof Error ? e.message : e));
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -395,34 +420,43 @@ export default function App() {
           ev.preventDefault();
       });
       flushSnapshot();
+      window.setTimeout(recomputePages, 100);
     },
-    [flushSnapshot, scheduleSnapshot]
+    [flushSnapshot, scheduleSnapshot, recomputePages]
   );
 
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-white px-4 text-center text-neutral-700">
-        <div>
-          <h1 className="text-xl font-semibold text-neutral-900">
-            Could not load the editor.
-          </h1>
-          <p className="mt-3 max-w-md text-sm text-neutral-600">{error}</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-50 px-4 text-center text-neutral-700">
+        <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-600">
+            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4M12 16h.01" strokeLinecap="round" />
+            </svg>
+          </div>
+          <h1 className="text-lg font-semibold text-neutral-900">Could not load the editor</h1>
+          <p className="mt-2 max-w-md text-sm text-neutral-600">{error}</p>
+          <button
+            type="button"
+            className="mt-6 rounded-md bg-neutral-900 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-neutral-800"
+            onClick={() => window.close()}
+          >
+            Close tab
+          </button>
         </div>
-        <button
-          type="button"
-          className="rounded-md border border-neutral-300 bg-white px-6 py-2 text-sm font-semibold shadow-sm hover:bg-neutral-50"
-          onClick={() => window.close()}
-        >
-          Close tab
-        </button>
       </div>
     );
   }
 
   if (busy || initialBody === null) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-neutral-500 text-white">
-        <p className="text-sm">Loading template…</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#525659] text-white">
+        <svg className="h-8 w-8 animate-spin" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
+          <path d="M4 12a8 8 0 0 1 8-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+        </svg>
+        <p className="text-sm text-neutral-200">Loading template…</p>
       </div>
     );
   }
@@ -439,16 +473,18 @@ export default function App() {
   const fsList = FONT_PT_SIZES.map((n) => `${n}pt`).join(' ');
 
   return (
-    <div className="relative h-screen min-h-0 overflow-hidden bg-[#525659] text-[13px] text-neutral-800">
-      <button
-        type="button"
-        className="fixed right-4 top-4 z-[100000] rounded border border-neutral-400 bg-white px-4 py-2 text-xs font-semibold shadow-lg hover:bg-neutral-50"
-        onClick={handleSaveTemplate}
-      >
-        Save template
-      </button>
+    <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-[#525659] text-[13px] text-neutral-800">
+      <EditorTopBar
+        templateName={templateName}
+        docType={docType}
+        pageCount={pageCount}
+        dirty={dirty}
+        saving={saving}
+        onSave={handleSaveTemplate}
+        onClose={() => window.close()}
+      />
 
-      <div className="h-full min-h-0 overflow-auto">
+      <div className="relative flex-1 min-h-0 overflow-auto">
         <Editor
           key={`${docType}-tpl`}
           tinymceScriptSrc={`${import.meta.env.BASE_URL}tinymce/tinymce.min.js`}
@@ -542,6 +578,8 @@ export default function App() {
           onInit={onEditorInit}
         />
       </div>
+
+      <EditorStatusBar pageCount={pageCount} dirty={dirty} docType={docType} />
     </div>
   );
 }

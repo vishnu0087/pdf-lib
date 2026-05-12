@@ -326,6 +326,25 @@ export function injectEditorPagedScreenCss(doc: Document | null | undefined): vo
       display: block;
       isolation: isolate !important;
     }
+    /* Page-break indicators: faint 1px line every 297mm. Matches where Puppeteer will split. */
+    .sheet.sheet--letter::after,
+    .sheet.sheet--table::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent calc(297mm - 1px),
+        rgba(59, 130, 246, 0.55) calc(297mm - 1px),
+        rgba(59, 130, 246, 0.55) 297mm,
+        transparent 297mm
+      );
+      background-size: 100% 297mm;
+      background-repeat: repeat-y;
+      z-index: 3;
+    }
     .sheet-inner--p1,
     .sheet-inner--p2 {
       position: relative;
@@ -371,6 +390,23 @@ export function injectEditorPagedScreenCss(doc: Document | null | undefined): vo
       max-width: min(100%, 200pt);
     }
   `.trim();
+}
+
+/**
+ * Estimate page count by dividing each .sheet's rendered height by 297mm (A4).
+ * Approximates Puppeteer's print break behavior for the status bar indicator.
+ */
+export function countEditorPages(doc: Document | null | undefined): number {
+  if (!doc) return 1;
+  const sheets = doc.querySelectorAll('.sheet');
+  if (!sheets.length) return 1;
+  const pageHeightPx = (297 * 96) / 25.4;
+  let total = 0;
+  sheets.forEach((s) => {
+    const h = (s as HTMLElement).scrollHeight || 0;
+    total += Math.max(1, Math.ceil(h / pageHeightPx));
+  });
+  return Math.max(1, total);
 }
 
 /**
