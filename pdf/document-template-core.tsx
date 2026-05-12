@@ -47,6 +47,7 @@ const shell = {
     pageBreakAfter: 'auto' as const,
     pageBreakInside: 'auto' as const,
     overflow: 'visible' as const,
+    backgroundColor: '#fff',
   },
   sheetBg: {
     position: 'absolute' as const,
@@ -87,7 +88,8 @@ const shell = {
     position: 'relative' as const,
     backgroundColor: '#fff',
     backgroundSize: '210mm 297mm',
-    backgroundRepeat: 'repeat-y' as const,
+    /* Full-page art includes footer strip; repeating vertically redraws logos mid-document in screen preview. */
+    backgroundRepeat: 'no-repeat' as const,
     backgroundPosition: 'top left' as const,
     backgroundOrigin: 'border-box' as const,
     backgroundClip: 'border-box' as const,
@@ -148,6 +150,8 @@ function PdfDocumentShell({
 
   const bgUrl = `${baseUrl}/assests/pdf-background.png`;
 
+  /* One full A4 art per printed page: @page backgrounds repeat per sheet correctly.
+   * (background-repeat on .sheet fragments only paints a slice on short last pages.) */
   const printWatermarkCss = `@page {
   size: A4 portrait;
   margin: 0;
@@ -164,11 +168,13 @@ function PdfDocumentShell({
   body {
     background: transparent !important;
   }
+  .sheet.sheet--letter,
+  .sheet.sheet--table {
+    background-image: none !important;
+    background-color: transparent !important;
+  }
   .letter-sheet-bg {
     display: none !important;
-  }
-  .sheet.sheet--table {
-    background: none !important;
   }
 }`;
 

@@ -156,6 +156,30 @@
         background: #ffebee;
         color: var(--danger);
       }
+      .template-option-row {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+      }
+      .template-option-row .opt--grow {
+        flex: 1;
+        min-width: 0;
+      }
+      button.btn-inline {
+        padding: 0.3rem 0.55rem;
+        font-size: 0.76rem;
+        font-weight: 600;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        color: var(--text);
+        flex-shrink: 0;
+      }
+      button.btn-inline.danger {
+        color: var(--danger);
+        border-color: #ffcdd2;
+      }
       .msg.ok {
         background: #e8f5e9;
         color: var(--ok);
@@ -236,8 +260,8 @@
             </button>
           </div>
           <p style="font-size: 0.78rem; color: var(--muted); margin: 0.35rem 0 0">
-            Customize shows placeholders like &lt;CUSTOMER_NAME&gt; from field names;
-            your JSON replaces them when you download.
+            Customize opens a full-page sample PDF (fixture data for your document type).
+            Your uploaded JSON is still used when you download.
           </p>
           <div id="step3-msg"></div>
           <div class="row">
@@ -335,16 +359,6 @@
           list = [];
         }
 
-        const opts = [
-          { label: 'Default', value: 'default' },
-        ];
-        for (const t of list) {
-          opts.push({
-            label: String(t.name || t.id),
-            value: t.id,
-          });
-        }
-
         if (
           state.templatePick !== 'default' &&
           !list.some((x) => x.id === state.templatePick)
@@ -353,21 +367,96 @@
         }
 
         box.innerHTML = '';
-        for (const opt of opts) {
+
+        const defLbl = document.createElement('label');
+        defLbl.className = 'opt';
+        const defInp = document.createElement('input');
+        defInp.type = 'radio';
+        defInp.name = 'templatePick';
+        defInp.value = 'default';
+        defLbl.appendChild(defInp);
+        defLbl.appendChild(document.createTextNode(' Default'));
+        box.appendChild(defLbl);
+
+        for (const t of list) {
+          const row = document.createElement('div');
+          row.className = 'template-option-row';
+
           const lbl = document.createElement('label');
-          lbl.className = 'opt';
+          lbl.className = 'opt opt--grow';
           const inp = document.createElement('input');
           inp.type = 'radio';
           inp.name = 'templatePick';
-          inp.value = opt.value;
+          inp.value = t.id;
           lbl.appendChild(inp);
-          lbl.appendChild(document.createTextNode(' ' + opt.label));
-          box.appendChild(lbl);
+          lbl.appendChild(
+            document.createTextNode(' ' + String(t.name || t.id))
+          );
+
+          const editBtn = document.createElement('button');
+          editBtn.type = 'button';
+          editBtn.className = 'btn-inline ghost';
+          editBtn.textContent = 'Edit';
+          editBtn.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            try {
+              localStorage.setItem(
+                'pdfTemplateEditorBootstrap',
+                JSON.stringify({
+                  docType: state.docType,
+                  templatePick: t.id,
+                })
+              );
+            } catch {
+              setMsg('step3-msg', 'Storage failed.', 'err');
+              return;
+            }
+            window.open('/template-editor/', '_blank', 'noopener');
+          });
+
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.className = 'btn-inline danger';
+          delBtn.textContent = 'Delete';
+          delBtn.addEventListener('click', async (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (
+              !confirm(
+                'Delete template "' + String(t.name || t.id) + '"?'
+              )
+            )
+              return;
+            try {
+              const res = await fetch(
+                `/api/custom-templates/${encodeURIComponent(t.id)}?docType=${encodeURIComponent(state.docType)}`,
+                { method: 'DELETE' }
+              );
+              const jr = await res.json().catch(() => ({}));
+              if (!res.ok) {
+                setMsg('step3-msg', jr.error || 'Delete failed.', 'err');
+                return;
+              }
+              clearMsg('step3-msg');
+              if (state.templatePick === t.id) state.templatePick = 'default';
+              await rebuildTemplateRadios();
+            } catch {
+              setMsg('step3-msg', 'Delete failed.', 'err');
+            }
+          });
+
+          row.appendChild(lbl);
+          row.appendChild(editBtn);
+          row.appendChild(delBtn);
+          box.appendChild(row);
         }
 
-        Array.from(box.querySelectorAll('input[name="templatePick"]')).forEach((el) => {
-          el.checked = el.value === state.templatePick;
-        });
+        Array.from(box.querySelectorAll('input[name="templatePick"]')).forEach(
+          (el) => {
+            el.checked = el.value === state.templatePick;
+          }
+        );
       }
 
       $('step-3').addEventListener('change', (ev) => {
@@ -502,12 +591,16 @@
           setMsg('step3-msg', 'Pick a document type first.', 'err');
           return;
         }
+        const sel = document.querySelector(
+          'input[name="templatePick"]:checked'
+        );
+        const pick = sel ? sel.value : 'default';
         try {
           localStorage.setItem(
             'pdfTemplateEditorBootstrap',
             JSON.stringify({
               docType: state.docType,
-              templatePick: state.templatePick || 'default',
+              templatePick: pick,
             })
           );
         } catch {

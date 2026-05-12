@@ -62,8 +62,9 @@ export async function waitFontsAndImages(page) {
 /**
  * @param {string} html
  * @param {'quote' | 'other'} quoteLayout — quote skips sales-flow compaction
+ * @param {number} [listenPort] — origin for resolving relative URLs in print/CSS
  */
-export async function puppeteerHtmlToPdfBuffer(html, quoteLayout) {
+export async function puppeteerHtmlToPdfBuffer(html, quoteLayout, listenPort) {
   const browser = await getBrowser();
   const page = await browser.newPage();
   try {
@@ -72,9 +73,14 @@ export async function puppeteerHtmlToPdfBuffer(html, quoteLayout) {
       height: PDF_VIEWPORT.height,
       deviceScaleFactor: 1,
     });
+    const baseURL =
+      typeof listenPort === 'number' && listenPort > 0
+        ? `http://127.0.0.1:${listenPort}`
+        : undefined;
     await page.setContent(html, {
       waitUntil: 'load',
       timeout: 45000,
+      ...(baseURL ? { baseURL } : {}),
     });
     await waitFontsAndImages(page);
     await page.emulateMediaType('print');

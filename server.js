@@ -19,7 +19,8 @@ import {
   applyTemplateOverrides,
   extractTemplateDefaults,
 } from './lib/pdf-template-customization.js';
-import { prepareFixtureForEditorVisualPreview } from './lib/editor-preview-payload.js';
+import { substitutePlaceholdersInHtml } from './lib/placeholder-html.js';
+import { prepareLiveHtmlForPdf } from './lib/live-html-pdf-fix.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -164,9 +165,6 @@ function clonePlaceholderPayload(raw) {
 /** `<CUSTOMER_NAME>` / `<TEXT_2>` style (HTML-safe Upper token). */
 const PLACEHOLDER_ANGLE_RE = /^<[A-Z][A-Z0-9_]*(?:_\d+)?>$/;
 
-/** Legacy path tokens from older builds */
-const PLACEHOLDER_PIPE_RE = /<\|([^>|]+(?:\|[^>|]+)*)\|>/g;
-
 function isPlaceholderToken(s) {
   return typeof s === 'string' && (PLACEHOLDER_ANGLE_RE.test(s) || /^<\|(?:[^|]+\|)+\|>$/.test(s));
 }
@@ -190,52 +188,6 @@ function scrubOverridesForMerge(o) {
     else out[k] = v;
   }
   return out;
-}
-
-function getByJsonPath(obj, parts) {
-  let cur = obj;
-  for (const p of parts) {
-    if (cur == null) return undefined;
-    cur = cur[/^\d+$/.test(p) ? Number(p) : p];
-  }
-  return cur;
-}
-
-function escapeXmlText(v) {
-  return String(v)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-/**
- * @param {string} html
- * @param {object} data - user's PDF JSON
- * @param {Record<string, string[]> | null | undefined} tokenMap - from saved template / placeholder API
- */
-function fillPlaceholders(html, data, tokenMap) {
-  let out = html;
-  if (tokenMap && typeof tokenMap === 'object') {
-    const bodies = Object.keys(tokenMap).sort((a, b) => b.length - a.length);
-    for (const body of bodies) {
-      const pathParts = tokenMap[body];
-      if (!Array.isArray(pathParts)) continue;
-      const val = getByJsonPath(data, pathParts);
-      const replacement =
-        val == null || typeof val === 'object' ? '' : escapeXmlText(String(val));
-      const token = `<${body}>`;
-      const tokenEnt = `&lt;${body}&gt;`;
-      out = out.split(token).join(replacement);
-      out = out.split(tokenEnt).join(replacement);
-    }
-  }
-  return out.replace(PLACEHOLDER_PIPE_RE, (_, inner) => {
-    const parts = inner.split('|');
-    const v = getByJsonPath(data, parts);
-    if (v == null || typeof v === 'object') return '';
-    return escapeXmlText(String(v));
-  });
 }
 
 function sanitizeLiveHtmlPayload(html) {
@@ -331,12 +283,12 @@ app.get('/api/placeholder-data', (req, res) => {
     return res.status(404).json({ error: 'Fixture missing.' });
   try {
     const raw = JSON.parse(fs.readFileSync(fp, 'utf8'));
-    prepareFixtureForEditorVisualPreview(docType, raw);
-    const { payload, tokenMap } = clonePlaceholderPayload(raw);
-    const struct = validatePdfJsonStructure(docType, payload);
+    const tokenSource = JSON.parse(JSON.stringify(raw));
+    const { tokenMap } = clonePlaceholderPayload(tokenSource);
+    const struct = validatePdfJsonStructure(docType, raw);
     if (!struct.valid)
       return res.status(500).json({ error: 'Placeholder schema invalid.' });
-    res.json({ ...payload, tokenMap });
+    res.json({ ...raw, tokenMap });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'Could not build placeholders.' });
@@ -442,6 +394,61 @@ app.post('/api/custom-templates', async (req, res) => {
   }
 });
 
+app.put('/api/custom-templates/:id', async (req, res) => {
+  const { docType, name, overrides } = req.body || {};
+  const ok = ['quote', 'sales', 'invoice', 'salary'];
+  if (!ok.includes(docType))
+    return res.status(400).json({ error: 'Invalid docType.' });
+  if (!overrides || typeof overrides !== 'object')
+    return res.status(400).json({ error: 'Missing overrides.' });
+  if (!/^tpl_[a-zA-Z0-9_-]+$/.test(req.params.id))
+    return res.status(400).json({ error: 'Invalid template id.' });
+  const loaded = await loadCustomTemplateRecord(req.params.id, String(docType));
+  if (!loaded.valid) return res.status(404).json({ error: loaded.error });
+  const trimmedName =
+    name != null && String(name).trim() !== ''
+      ? String(name).trim().slice(0, 120)
+      : String(loaded.record.name || 'Custom template').slice(0, 120) ||
+        'Custom template';
+  try {
+    await templatesColl.updateOne(
+      { id: req.params.id, docType: String(docType) },
+      {
+        $set: {
+          name: trimmedName || 'Custom template',
+          overrides,
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    );
+    res.json({ id: req.params.id, name: trimmedName || 'Custom template' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Could not update template.' });
+  }
+});
+
+app.delete('/api/custom-templates/:id', async (req, res) => {
+  const docType = String(req.query.docType || '');
+  const ok = ['quote', 'sales', 'invoice', 'salary'];
+  if (!ok.includes(docType))
+    return res.status(400).json({ error: 'Missing or invalid docType.' });
+  if (!/^tpl_[a-zA-Z0-9_-]+$/.test(req.params.id))
+    return res.status(400).json({ error: 'Invalid template id.' });
+  try {
+    const result = await templatesColl.deleteOne({
+      id: req.params.id,
+      docType,
+    });
+    if (result.deletedCount === 0)
+      return res.status(404).json({ error: 'Template not found.' });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Could not delete template.' });
+  }
+});
+
 app.post('/api/validate-pdf-json', (req, res) => {
   const { docType, data } = req.body || {};
   const struct = validatePdfJsonStructure(docType, data);
@@ -494,9 +501,11 @@ app.post('/api/pdf-generate', async (req, res) => {
   try {
     let buf;
     if (htmlExact) {
+      const merged = substitutePlaceholdersInHtml(htmlExact, data, tokenMap);
       buf = await puppeteerHtmlToPdfBuffer(
-        fillPlaceholders(htmlExact, data, tokenMap),
-        quoteLayout
+        prepareLiveHtmlForPdf(merged, listenPort),
+        quoteLayout,
+        listenPort
       );
     } else {
       let dataForPdf = data;
@@ -514,7 +523,7 @@ app.post('/api/pdf-generate', async (req, res) => {
         if (!mergedCheck.valid) return res.status(400).json(mergedCheck);
       }
       const html = htmlForDocType(docType, dataForPdf, listenPort);
-      buf = await puppeteerHtmlToPdfBuffer(html, quoteLayout);
+      buf = await puppeteerHtmlToPdfBuffer(html, quoteLayout, listenPort);
     }
     const stem = path.basename(filename, path.extname(filename) || '.pdf');
     const diskName = `${Date.now()}_${randomBytes(4).toString('hex')}_${stem}.pdf`;

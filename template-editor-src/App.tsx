@@ -1,29 +1,23 @@
 import { Editor } from '@tinymce/tinymce-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Editor as TinyEditor } from 'tinymce';
 import {
   FONT_PT_SIZES,
-  buildSyncOverridesFromRibbonInput,
+  injectEditorPagedScreenCss,
   injectPdfHeadIntoEditorDoc,
   mergeTemplateHtml,
-  normalizeColorForInput as normColor,
   persistLiveHtmlString,
   sanitizeHtml,
   splitTemplateHtml,
   type TemplateHtmlParts,
   syncHeadersIntoDraft,
   updateLiveThemeCssFromDraft,
+  wireTemplateImagesForEditor,
 } from './editorBridge';
-
-const FONT_FAMILIES: { label: string; value: string }[] = [
-  { label: 'Montserrat', value: 'Montserrat, sans-serif' },
-  { label: 'Segoe UI', value: '\'Segoe UI\', sans-serif' },
-  { label: 'Times New Roman', value: '\'Times New Roman\', serif' },
-  { label: 'Arial', value: 'Arial, sans-serif' },
-  { label: 'Calibri', value: '\'Calibri\', sans-serif' },
-  { label: 'Georgia', value: 'Georgia, serif' },
-];
+import {
+  retokenizeEditorLiveHtml,
+  substitutePlaceholdersInHtml,
+} from '../lib/placeholder-html.js';
 
 function readBootstrap(): null | {
   docType: string;
@@ -39,14 +33,12 @@ function readBootstrap(): null | {
   }
 }
 
-function editorToolbarHeightPx(): number {
-  return Math.max(380, Math.min(920, window.innerHeight - 220));
-}
-
 export default function App() {
   const editorRef = useRef<TinyEditor | null>(null);
   const templatePartsRef = useRef<TemplateHtmlParts | null>(null);
-  /** DOM lib uses numeric timer ids; avoid NodeJS.Timeout from mixed typings */
+  /** When set, Save updates this template instead of creating a new one */
+  const editingTemplateIdRef = useRef<string | null>(null);
+  const editingTemplateNameRef = useRef<string | null>(null);
   const snapTm = useRef<number | null>(null);
 
   const [error, setError] = useState<string | null>(null);
@@ -54,40 +46,12 @@ export default function App() {
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const [busy, setBusy] = useState(true);
   const [initialBody, setInitialBody] = useState<string | null>(null);
-  const [editorH, setEditorH] = useState(editorToolbarHeightPx);
 
   const snapshotRef = useRef<unknown>(null);
 
   const draftRef = useRef(draft);
   useEffect(() => {
     draftRef.current = draft;
-  }, [draft]);
-
-  const rib = useMemo(() => {
-    const ds =
-      draft.document &&
-      typeof draft.document === 'object' &&
-      draft.document !== null &&
-      'defaultStyle' in draft.document &&
-      typeof (draft.document as { defaultStyle?: unknown }).defaultStyle ===
-        'object' &&
-      (draft.document as { defaultStyle: Record<string, unknown> })
-        .defaultStyle
-        ? (draft.document as { defaultStyle: Record<string, unknown> })
-            .defaultStyle
-        : {};
-    const fs = Number(ds.fontSize) || 8;
-    let famRaw =
-      ds.fontFamily != null ? String(ds.fontFamily) : 'Montserrat, sans-serif';
-    const guess = FONT_FAMILIES.find(
-      (f) => famRaw === f.value || famRaw.includes(f.value.split(',')[0].trim())
-    );
-    famRaw = guess ? guess.value : FONT_FAMILIES[0].value;
-    const fg = normColor(
-      ds.color != null ? String(ds.color) : undefined,
-      '#212121'
-    );
-    return { fontSize: fs, fontFamily: famRaw, color: fg };
   }, [draft]);
 
   const scheduleSnapshot = useCallback(() => {
@@ -113,25 +77,11 @@ export default function App() {
   }, [docType]);
 
   useEffect(() => {
-    const ed = editorRef.current;
-    if (!ed) return;
-    const container = ed.getContainer();
-    if (container) {
-      container.style.height = `${editorH}px`;
-      const ifr = ed.getContentAreaContainer()?.querySelector?.('iframe');
-      if (ifr instanceof HTMLIFrameElement) ifr.style.height = `${editorH}px`;
-    }
-  }, [editorH]);
-
-  useEffect(() => {
-    const onResize = () => setEditorH(editorToolbarHeightPx());
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  useEffect(() => {
     let cancelled = false;
     async function boot() {
+      editingTemplateIdRef.current = null;
+      editingTemplateNameRef.current = null;
+
       const b = readBootstrap();
       if (!b || typeof b.docType !== 'string') {
         setError(
@@ -164,7 +114,7 @@ export default function App() {
               setError(
                 ('error' in rawPayload
                   ? String(rawPayload.error)
-                  : null) || 'Could not load layout placeholders.'
+                  : null) || 'Could not load layout preview data.'
               );
             setBusy(false);
             return;
@@ -186,7 +136,7 @@ export default function App() {
             /* */
           }
         } catch {
-          if (!cancelled) setError('Could not load layout placeholders.');
+          if (!cancelled) setError('Could not load layout preview data.');
           setBusy(false);
           return;
         }
@@ -207,6 +157,9 @@ export default function App() {
           );
           const disk = await r.json();
           if (r.ok && disk.overrides && typeof disk.overrides === 'object') {
+            editingTemplateIdRef.current = pick;
+            if (typeof disk.name === 'string')
+              editingTemplateNameRef.current = disk.name;
             const liveRaw = disk.overrides._liveHtml;
             const liveOk =
               typeof liveRaw === 'string' && String(liveRaw).length > 400;
@@ -223,6 +176,7 @@ export default function App() {
                 } catch {
                   /* */
                 }
+                html = substitutePlaceholdersInHtml(html, baseData, tm);
               }
             } else {
               const overridesOnly = { ...disk.overrides } as Record<
@@ -311,112 +265,104 @@ export default function App() {
     if (ed) updateLiveThemeCssFromDraft(ed.getDoc(), draft);
   }, [draft]);
 
-  function withEditorTheme(
-    patch: { fontSizePt: number; fontFamily: string; color: string }
-  ) {
-    setDraft((prev) => {
-      const next = buildSyncOverridesFromRibbonInput(prev, patch);
-      const ed = editorRef.current;
-      const doc = ed?.getDoc();
-      if (doc) updateLiveThemeCssFromDraft(doc, next);
-      return next;
-    });
-  }
-
-  function onFontFamilyChange(v: string) {
-    withEditorTheme({
-      fontSizePt: rib.fontSize,
-      fontFamily: v,
-      color: rib.color,
-    });
-    const ed = editorRef.current;
-    if (!ed) return;
-    ed.focus();
-    const name = v.split(',')[0].trim().replace(/^['"]|['"]$/g, '');
-    ed.execCommand('FontName', false, name);
-    scheduleSnapshot();
-  }
-
-  function onFontSizeChange(v: string) {
-    const n = Number(v) || 8;
-    withEditorTheme({
-      fontSizePt: n,
-      fontFamily: rib.fontFamily,
-      color: rib.color,
-    });
-    const ed = editorRef.current;
-    if (!ed) return;
-    ed.focus();
-    ed.execCommand('FontSize', false, `${n}pt`);
-    scheduleSnapshot();
+  function readTokenMapFromStorage(): Record<string, string[]> | null {
+    try {
+      const tRaw = localStorage.getItem('pdfEditorTokenMap');
+      if (!tRaw) return null;
+      const parsed = JSON.parse(tRaw) as {
+        docType?: string;
+        tokenMap?: unknown;
+      };
+      if (
+        parsed.docType === docType &&
+        parsed.tokenMap &&
+        typeof parsed.tokenMap === 'object' &&
+        !Array.isArray(parsed.tokenMap)
+      ) {
+        return parsed.tokenMap as Record<string, string[]>;
+      }
+    } catch {
+      /* */
+    }
+    return null;
   }
 
   async function handleSaveTemplate() {
-    const name =
-      typeof prompt === 'function' ? prompt('Save template as:', 'My template') : '';
-    if (name === null || name === '') return;
-
     const ed = editorRef.current;
     const parts = templatePartsRef.current;
     if (!ed || !parts) return;
 
+    const updateId = editingTemplateIdRef.current;
+    let saveName = (editingTemplateNameRef.current || 'My template').trim();
+    if (!updateId) {
+      const p =
+        typeof prompt === 'function'
+          ? prompt('Save template as:', saveName || 'My template')
+          : '';
+      if (p === null || String(p).trim() === '') return;
+      saveName = String(p).trim();
+    }
+
     const inner = ed.getContent();
-    const fullHtml = mergeTemplateHtml({ ...parts, bodyInner: inner });
+    let fullHtml = mergeTemplateHtml({ ...parts, bodyInner: inner });
     const domDoc = new DOMParser().parseFromString(fullHtml, 'text/html');
 
     let next = syncHeadersIntoDraft(domDoc, docType, draftRef.current);
     setDraft(next);
 
-    const mergedRibbon = buildSyncOverridesFromRibbonInput(next, {
-      fontSizePt: rib.fontSize,
-      fontFamily: rib.fontFamily,
-      color: rib.color,
-    });
+    const tokenMap = readTokenMapFromStorage();
+    const snap = snapshotRef.current;
+    if (tokenMap && snap && typeof snap === 'object')
+      fullHtml = retokenizeEditorLiveHtml(fullHtml, snap, tokenMap);
+
     const overrides = JSON.parse(
-      JSON.stringify(mergedRibbon)
+      JSON.stringify(next)
     ) as Record<string, unknown>;
     overrides._liveHtml = sanitizeHtml(fullHtml);
 
     try {
-      const tRaw = localStorage.getItem('pdfEditorTokenMap');
-      if (tRaw) {
-        const parsed = JSON.parse(tRaw) as {
-          docType?: string;
-          tokenMap?: unknown;
-        };
-        if (
-          parsed.docType === docType &&
-          parsed.tokenMap &&
-          typeof parsed.tokenMap === 'object'
-        ) {
-          overrides._placeholderTokenMap = parsed.tokenMap as Record<
-            string,
-            string[]
-          >;
-        }
-      }
+      const tStored = readTokenMapFromStorage();
+      if (tStored) overrides._placeholderTokenMap = tStored;
     } catch {
       /* */
     }
 
     try {
-      const res = await fetch('/api/custom-templates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ docType, name, overrides }),
-      });
+      let res: Response;
+      if (updateId) {
+        res = await fetch(
+          `/api/custom-templates/${encodeURIComponent(updateId)}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ docType, name: saveName, overrides }),
+          }
+        );
+      } else {
+        res = await fetch('/api/custom-templates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ docType, name: saveName, overrides }),
+        });
+      }
       const jr = await res.json();
       if (!res.ok) throw new Error(jr.error || 'Save failed');
+      editingTemplateNameRef.current = jr.name || saveName;
+      if (!updateId && jr.id) editingTemplateIdRef.current = String(jr.id);
       try {
         if (window.opener && !window.opener.closed)
           window.opener.postMessage(
-            { type: 'pdf-template-saved', id: jr.id },
+            { type: 'pdf-template-saved', id: jr.id || updateId },
             '*'
           );
       } catch {
         /* */
       }
-      alert(`Saved as "${jr.name}". Choose it on step 3 in the wizard.`);
+      alert(
+        updateId
+          ? `Updated template "${jr.name || saveName}".`
+          : `Saved as "${jr.name}". Choose it on step 3 in the wizard.`
+      );
       flushSnapshot();
     } catch (e) {
       alert(String(e instanceof Error ? e.message : e));
@@ -427,13 +373,22 @@ export default function App() {
     (_evt: unknown, editor: TinyEditor) => {
       editorRef.current = editor;
       const parts = templatePartsRef.current;
-      if (parts?.prefix)
-        injectPdfHeadIntoEditorDoc(editor.getDoc(), parts.prefix);
-      updateLiveThemeCssFromDraft(editor.getDoc(), draftRef.current);
+      const doc = editor.getDoc();
+      if (parts?.prefix) injectPdfHeadIntoEditorDoc(doc, parts.prefix);
+      injectEditorPagedScreenCss(doc);
+      updateLiveThemeCssFromDraft(doc, draftRef.current);
+      const wireImgs = () => wireTemplateImagesForEditor(editor.getDoc());
+      wireImgs();
+      try {
+        doc.execCommand('styleWithCSS', false, 'true');
+      } catch {
+        /* */
+      }
       editor.on(
         'change keyup SetContent Undo Redo ExecCommand ObjectResize',
         scheduleSnapshot
       );
+      editor.on('SetContent Undo Redo', wireImgs);
       editor.on('keydown', (e) => {
         const ev = e as KeyboardEvent;
         if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 's')
@@ -466,169 +421,127 @@ export default function App() {
 
   if (busy || initialBody === null) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#faf9f8] text-neutral-600">
+      <div className="flex min-h-screen items-center justify-center bg-neutral-500 text-white">
         <p className="text-sm">Loading template…</p>
       </div>
     );
   }
 
-  const ffList = FONT_FAMILIES.map(
-    (f) => `${f.label}=${f.value.split(',')[0].trim().replace(/^['"]|['"]$/g, '')}`
-  ).join('; ');
+  const ffList = [
+    'Montserrat=Montserrat',
+    'Segoe UI=Segoe UI',
+    'Times New Roman=Times New Roman',
+    'Arial=Arial',
+    'Calibri=Calibri',
+    'Georgia=Georgia',
+  ].join('; ');
 
   const fsList = FONT_PT_SIZES.map((n) => `${n}pt`).join(' ');
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#f3f2f1] text-[13px] text-neutral-800">
-      <header className="flex shrink-0 items-center gap-3 border-b border-neutral-300 bg-white px-3 py-2">
-        <span className="shrink-0 rounded-sm bg-[#185abd] px-3 py-[6px] text-xs font-semibold uppercase text-white">
-          PDF
-        </span>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-[15px] font-semibold leading-snug text-neutral-900">
-            {docType ? `${docType} · Layout` : 'Template layout'}
-          </h1>
-          <p className="mt-0.5 text-[11px] leading-snug text-neutral-500">
-            Layout uses field placeholders like &lt;CUSTOMER_NAME&gt; (from JSON keys),
-            not your uploaded file. Saved templates fill those from your JSON on Download.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="shrink-0 rounded-sm border border-neutral-400 bg-white px-3 py-[7px] text-xs font-semibold shadow-sm hover:bg-neutral-50"
-          onClick={handleSaveTemplate}
-        >
-          Save as new template…
-        </button>
-      </header>
+    <div className="relative h-screen min-h-0 overflow-hidden bg-[#525659] text-[13px] text-neutral-800">
+      <button
+        type="button"
+        className="fixed right-4 top-4 z-[100000] rounded border border-neutral-400 bg-white px-4 py-2 text-xs font-semibold shadow-lg hover:bg-neutral-50"
+        onClick={handleSaveTemplate}
+      >
+        Save template
+      </button>
 
-      <div className="shrink-0 border-b border-neutral-300 bg-white px-3 py-2">
-        <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-          <Field label="Document theme · font">
-            <select
-              className="h-8 max-w-[9rem] min-w-[8.5rem] rounded-[2px] border border-neutral-500 bg-white px-1 text-[inherit]"
-              value={rib.fontFamily}
-              onChange={(e) => onFontFamilyChange(e.target.value)}
-            >
-              {FONT_FAMILIES.map((f) => (
-                <option key={f.value} value={f.value}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Size (pt)">
-            <select
-              className="h-8 w-[4.25rem] rounded-[2px] border border-neutral-500 bg-white px-1 text-[inherit]"
-              value={String(rib.fontSize)}
-              onChange={(e) => onFontSizeChange(e.target.value)}
-            >
-              {FONT_PT_SIZES.map((n) => (
-                <option key={n} value={String(n)}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Theme text colour">
-            <input
-              type="color"
-              title="Applies to body theme + selection when changed"
-              value={normColor(rib.color, '#212121')}
-              onChange={(e) => {
-                const c = e.target.value;
-                withEditorTheme({
-                  fontSizePt: rib.fontSize,
-                  fontFamily: rib.fontFamily,
-                  color: c,
-                });
-                const ed = editorRef.current;
-                if (ed) {
-                  ed.focus();
-                  ed.execCommand('ForeColor', false, c);
-                }
-                scheduleSnapshot();
-              }}
-              className="h-[30px] w-[30px] cursor-pointer rounded border border-neutral-600 p-0"
-            />
-          </Field>
-        </div>
-      </div>
-
-      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-[#d9d9d9]">
-        <div className="flex min-h-full justify-center px-2 py-4">
-          <div
-            className="w-full shrink-0 overflow-hidden rounded-sm bg-[#e0e0e0] shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_4px_20px_rgba(0,0,0,0.18)]"
-            style={{
-              maxWidth: 'min(calc(210mm + 1.5rem), calc(100vw - 1rem))',
-            }}
-          >
-            <Editor
-              key={`${docType}-tpl`}
-              tinymceScriptSrc={`${import.meta.env.BASE_URL}tinymce/tinymce.min.js`}
-              licenseKey="gpl"
-              initialValue={initialBody}
-              init={{
-                height: editorH,
-                menubar: 'edit view insert format tools table',
-                promotion: false,
-                branding: false,
-                resize: true,
-                relative_urls: false,
-                remove_script_host: false,
-                convert_urls: false,
-                object_resizing: true,
-                plugins: [
-                  'advlist',
-                  'autolink',
-                  'lists',
-                  'link',
-                  'image',
-                  'charmap',
-                  'preview',
-                  'anchor',
-                  'searchreplace',
-                  'visualblocks',
-                  'code',
-                  'fullscreen',
-                  'insertdatetime',
-                  'media',
-                  'table',
-                  'help',
-                  'wordcount',
-                  'quickbars',
+      <div className="h-full min-h-0 overflow-auto">
+        <Editor
+          key={`${docType}-tpl`}
+          tinymceScriptSrc={`${import.meta.env.BASE_URL}tinymce/tinymce.min.js`}
+          licenseKey="gpl"
+          initialValue={initialBody}
+          init={{
+            min_height: 620,
+            menubar: false,
+            promotion: false,
+            branding: false,
+            resize: true,
+            statusbar: false,
+            relative_urls: false,
+            remove_script_host: false,
+            convert_urls: false,
+            paste_block_drop: false,
+            verify_html: false,
+            object_resizing: 'img,table',
+            extended_valid_elements:
+              'img[class|src|alt|style|width|height|loading|draggable|id|border|hspace|vspace|align]',
+            image_advtab: true,
+            plugins: [
+              'autoresize',
+              'lists',
+              'link',
+              'image',
+              'charmap',
+              'searchreplace',
+              'table',
+              'quickbars',
+              'nonbreaking',
+            ],
+            toolbar: false,
+            table_toolbar:
+              'tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol | tablecellprops tablerowprops',
+            table_cell_advtab: true,
+            table_row_advtab: true,
+            table_advtab: true,
+            quickbars_selection_toolbar:
+              'alignleft aligncenter alignright alignjustify | bold italic underline strikethrough | ' +
+              'outdent indent | lineheight | forecolor | fontsizeselect fontfamily | ' +
+              'bullist numlist | blocks | nonbreaking | removeformat',
+            quickbars_insert_toolbar: 'quickimage quicktable',
+            font_family_formats: ffList,
+            fontsize_formats: fsList,
+            line_height_formats: '1 1.15 1.2 1.35 1.5 1.75 2',
+            style_formats_merge: true,
+            style_formats: [
+              {
+                title: 'Paragraph spacing',
+                items: [
+                  {
+                    title: 'Tight',
+                    selector: 'p',
+                    styles: {
+                      marginTop: '0.2em',
+                      marginBottom: '0.2em',
+                    },
+                  },
+                  {
+                    title: 'Normal',
+                    selector: 'p',
+                    styles: {
+                      marginTop: '0.5em',
+                      marginBottom: '0.5em',
+                    },
+                  },
+                  {
+                    title: 'Loose',
+                    selector: 'p',
+                    styles: {
+                      marginTop: '1em',
+                      marginBottom: '1em',
+                    },
+                  },
+                  {
+                    title: 'No extra margin',
+                    selector: 'p',
+                    styles: {
+                      marginTop: '0',
+                      marginBottom: '0',
+                    },
+                  },
                 ],
-                toolbar:
-                  'undo redo | blocks | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image table | tableprops tablerowprops tablecellprops | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol | removeformat code fullscreen help',
-                table_toolbar:
-                  'tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol | tablecellprops tablerowprops',
-                table_cell_advtab: true,
-                table_row_advtab: true,
-                table_advtab: true,
-                quickbars_selection_toolbar:
-                  'bold italic | quicklink h2 h3 blockquote',
-                quickbars_insert_toolbar: 'quickimage quicktable',
-                font_family_formats: ffList,
-                fontsize_formats: fsList,
-                content_style:
-                  'body { margin: 0; padding: 0; } img { max-width: 100%; height: auto; }',
-              }}
-              onInit={onEditorInit}
-            />
-          </div>
-        </div>
+              },
+            ],
+            content_style:
+              'body { margin: 0; padding: 0; box-sizing: border-box; } p { box-sizing: border-box; } img { max-width: 100%; height: auto; }',
+            autoresize_bottom_margin: 48,
+          }}
+          onInit={onEditorInit}
+        />
       </div>
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] font-medium uppercase tracking-wide text-neutral-500">
-        {label}
-      </span>
-      {children}
     </div>
   );
 }

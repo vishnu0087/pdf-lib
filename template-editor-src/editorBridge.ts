@@ -272,6 +272,128 @@ export function injectPdfHeadIntoEditorDoc(
   });
 }
 
+/**
+ * Editor-only CSS (not persisted in saved HTML): stack each `.sheet` as an A4 page
+ * and keep tables/images in normal document flow so edits reflow predictably.
+ */
+export function injectEditorPagedScreenCss(doc: Document | null | undefined): void {
+  if (!doc?.head) return;
+  let tag = doc.getElementById('tpl-editor-paged-screen');
+  if (!tag) {
+    tag = doc.createElement('style');
+    tag.id = 'tpl-editor-paged-screen';
+    doc.head.appendChild(tag);
+  }
+  tag.textContent = `
+    html {
+      background: #525659 !important;
+    }
+    /* Flex column prevents margin-collapsing so sheets never visually merge */
+    body {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      gap: 36px !important;
+      margin: 0 !important;
+      padding: 28px 0 44px !important;
+      background: #525659 !important;
+      box-sizing: border-box !important;
+      width: 100% !important;
+      min-height: 100% !important;
+    }
+    /* Each page is its own stacking context so absolutes cannot paint over the next sheet */
+    .sheet.sheet--letter,
+    .sheet.sheet--table {
+      width: 210mm;
+      max-width: 100%;
+      min-height: 297mm;
+      height: auto !important;
+      margin: 0 !important;
+      flex: 0 0 auto;
+      box-sizing: border-box !important;
+      background-color: #ffffff !important;
+      /* Inline styles may set repeat-y on continuation sheet; PDF uses @page art instead */
+      background-repeat: no-repeat !important;
+      background-position: top left !important;
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,0.12),
+        0 4px 6px rgba(0,0,0,0.08),
+        0 12px 28px rgba(0,0,0,0.18);
+      break-after: page;
+      page-break-after: always;
+      position: relative !important;
+      overflow: visible !important;
+      display: block;
+      isolation: isolate !important;
+    }
+    .sheet-inner--p1,
+    .sheet-inner--p2 {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    .sheet-inner--p1 p,
+    .sheet-inner--p2 p {
+      box-sizing: border-box;
+    }
+    table.quote-table,
+    table.qt-html-table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 100%;
+      table-layout: auto;
+    }
+    table.quote-table td,
+    table.quote-table th,
+    table.qt-html-table td,
+    table.qt-html-table th {
+      vertical-align: top;
+      box-sizing: border-box;
+    }
+    img.letter-sheet-bg {
+      max-width: none !important;
+      width: 210mm !important;
+      height: auto !important;
+      pointer-events: none;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      vertical-align: middle;
+    }
+    img.qt-stamp-img,
+    img.qt-content-img {
+      pointer-events: auto;
+      max-width: min(100%, 200pt);
+    }
+  `.trim();
+}
+
+/**
+ * Make stamp/signature/content images draggable in the editor; inline styles
+ * (position, margins, width) are kept in HTML so saved templates print as edited.
+ */
+export function wireTemplateImagesForEditor(doc: Document | null | undefined): void {
+  if (!doc?.body) return;
+  doc.body.querySelectorAll('img').forEach((el) => {
+    const img = el as HTMLImageElement;
+    try {
+      if (img.classList.contains('letter-sheet-bg')) {
+        img.draggable = false;
+        return;
+      }
+      img.draggable = true;
+      if (!img.style.cursor) img.style.cursor = 'grab';
+    } catch {
+      /* */
+    }
+  });
+}
+
 const LIVE_HTML_FINGERPRINT_DATA = (data: unknown) =>
   `${JSON.stringify(data ?? {}).slice(0, 80)}-${(data &&
     typeof data === 'object' &&
