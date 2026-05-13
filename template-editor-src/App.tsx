@@ -8,7 +8,9 @@ import {
   injectPdfHeadIntoEditorDoc,
   mergeTemplateHtml,
   persistLiveHtmlString,
+  repaginateTableSheets,
   sanitizeHtml,
+  shiftPage1PaddingToSection,
   splitTemplateHtml,
   type TemplateHtmlParts,
   syncHeadersIntoDraft,
@@ -52,6 +54,44 @@ export default function App() {
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [templateName, setTemplateName] = useState('New template');
+
+  const resizeObsRef = useRef<ResizeObserver | null>(null);
+  const repaginateDebRef = useRef<number | null>(null);
+
+  const runRepaginate = useCallback(() => {
+    const ed = editorRef.current;
+    if (!ed) return;
+    const doc = ed.getDoc();
+    if (!doc) return;
+    const um = (ed as unknown as { undoManager?: { transact?: (cb: () => void) => void } })
+      .undoManager;
+    const work = () => {
+      try {
+        repaginateTableSheets(doc);
+      } catch {
+        /* */
+      }
+    };
+    try {
+      if (um?.transact) um.transact(work);
+      else work();
+    } catch {
+      work();
+    }
+    try {
+      setPageCount(countEditorPages(doc));
+    } catch {
+      /* */
+    }
+  }, []);
+
+  const scheduleRepaginate = useCallback(() => {
+    if (repaginateDebRef.current != null) window.clearTimeout(repaginateDebRef.current);
+    repaginateDebRef.current = window.setTimeout(() => {
+      repaginateDebRef.current = null;
+      runRepaginate();
+    }, 250);
+  }, [runRepaginate]);
 
   const recomputePages = useCallback(() => {
     const ed = editorRef.current;
@@ -323,9 +363,18 @@ export default function App() {
       saveName = String(p).trim();
     }
 
+    /* One final synchronous repagination so the persisted DOM matches what the
+       user sees. The live DOM is already multi-sheet, so getContent() now emits
+       all <section class="sheet--table"> siblings. */
+    try {
+      repaginateTableSheets(ed.getDoc());
+    } catch {
+      /* */
+    }
     const inner = ed.getContent();
-    let fullHtml = mergeTemplateHtml({ ...parts, bodyInner: inner });
-    const domDoc = new DOMParser().parseFromString(fullHtml, 'text/html');
+    const fullHtml0 = mergeTemplateHtml({ ...parts, bodyInner: inner });
+    const domDoc = new DOMParser().parseFromString(fullHtml0, 'text/html');
+    let fullHtml = fullHtml0;
 
     let next = syncHeadersIntoDraft(domDoc, docType, draftRef.current);
     setDraft(next);
@@ -401,6 +450,13 @@ export default function App() {
       const doc = editor.getDoc();
       if (parts?.prefix) injectPdfHeadIntoEditorDoc(doc, parts.prefix);
       injectEditorPagedScreenCss(doc);
+      /* Must run after template head + editor CSS are in the cascade so
+         getComputedStyle returns the template's real padding before we override. */
+      try {
+        shiftPage1PaddingToSection(doc);
+      } catch {
+        /* */
+      }
       updateLiveThemeCssFromDraft(doc, draftRef.current);
       const wireImgs = () => wireTemplateImagesForEditor(editor.getDoc());
       wireImgs();
@@ -409,9 +465,20 @@ export default function App() {
       } catch {
         /* */
       }
+      /* Initial repagination splits the single .sheet--table into real A4 siblings. */
+      try {
+        repaginateTableSheets(doc);
+        setPageCount(countEditorPages(doc));
+      } catch {
+        /* */
+      }
       editor.on(
         'change keyup SetContent Undo Redo ExecCommand ObjectResize',
         scheduleSnapshot
+      );
+      editor.on(
+        'input keyup SetContent Undo Redo ExecCommand ObjectResized',
+        scheduleRepaginate
       );
       editor.on('SetContent Undo Redo', wireImgs);
       editor.on('keydown', (e) => {
@@ -419,10 +486,30 @@ export default function App() {
         if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 's')
           ev.preventDefault();
       });
+      /* Body height changes (image loads, autoresize) → repaginate. */
+      if (typeof ResizeObserver !== 'undefined' && doc.body) {
+        const obs = new ResizeObserver(() => {
+          scheduleRepaginate();
+        });
+        obs.observe(doc.body);
+        resizeObsRef.current = obs;
+      }
+      editor.on('remove', () => {
+        try {
+          resizeObsRef.current?.disconnect();
+        } catch {
+          /* */
+        }
+        resizeObsRef.current = null;
+        if (repaginateDebRef.current != null) {
+          window.clearTimeout(repaginateDebRef.current);
+          repaginateDebRef.current = null;
+        }
+      });
       flushSnapshot();
       window.setTimeout(recomputePages, 100);
     },
-    [flushSnapshot, scheduleSnapshot, recomputePages]
+    [flushSnapshot, scheduleSnapshot, scheduleRepaginate, recomputePages]
   );
 
   if (error) {

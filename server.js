@@ -34,12 +34,24 @@ const TEMPLATE_EDITOR_INDEX = path.join(
 /** Each download is written here first, then the same bytes are sent to the client. */
 const GENERATED_PDF_DIR = path.join(ROOT, 'generated-pdfs');
 
+/**
+ * Default preview fixture per template type. Loaded by /api/placeholder-data
+ * when the New-Template editor boots without explicit data, so users see
+ * realistic populated content (tables, totals, customer info) immediately.
+ *
+ * Add a new docType by extending this map — `DOC_TYPES` and the validator
+ * are derived from it, so no other conditionals need updating.
+ */
 const FIXTURE_PATH = {
-  quote: path.join(ROOT, 'fixtures', 'quote', 'data1.json'),
+  quote: path.join(ROOT, 'fixtures', 'quote', 'data2.json'),
   invoice: path.join(ROOT, 'fixtures', 'invoice', 'invoice-data1.json'),
   sales: path.join(ROOT, 'fixtures', 'sales', 's-data1.json'),
   salary: path.join(ROOT, 'fixtures', 'salary', 'sa-data1.json'),
 };
+
+/** Derived from FIXTURE_PATH so the mapping is the single source of truth. */
+const DOC_TYPES = Object.keys(FIXTURE_PATH);
+const isValidDocType = (s) => typeof s === 'string' && DOC_TYPES.includes(s);
 
 const MONGO_URI = 'mongodb://127.0.0.1:27017/TemplateDB';
 
@@ -275,8 +287,7 @@ app.use(
 
 app.get('/api/placeholder-data', (req, res) => {
   const docType = String(req.query.docType || '');
-  const ok = ['quote', 'sales', 'invoice', 'salary'];
-  if (!ok.includes(docType))
+  if (!isValidDocType(docType))
     return res.status(400).json({ error: 'Invalid docType.' });
   const fp = FIXTURE_PATH[docType];
   if (!fp || !fs.existsSync(fp))
@@ -296,9 +307,8 @@ app.get('/api/placeholder-data', (req, res) => {
 });
 
 app.get('/api/custom-templates', async (req, res) => {
-  const docType = req.query.docType;
-  const ok = ['quote', 'sales', 'invoice', 'salary'];
-  if (!ok.includes(String(docType)))
+  const docType = String(req.query.docType || '');
+  if (!isValidDocType(docType))
     return res.status(400).json({ error: 'Invalid docType.' });
   try {
     const rows = await templatesColl
@@ -319,12 +329,11 @@ app.get('/api/custom-templates', async (req, res) => {
 });
 
 app.get('/api/custom-templates/:id', async (req, res) => {
-  const docType = req.query.docType;
-  const ok = ['quote', 'sales', 'invoice', 'salary'];
-  if (!ok.includes(String(docType))) {
+  const docType = String(req.query.docType || '');
+  if (!isValidDocType(docType)) {
     return res.status(400).json({ error: 'Missing or invalid docType.' });
   }
-  const loaded = await loadCustomTemplateRecord(req.params.id, String(docType));
+  const loaded = await loadCustomTemplateRecord(req.params.id, docType);
   if (!loaded.valid) return res.status(404).json({ error: loaded.error });
   const r = loaded.record;
   return res.json({
@@ -371,8 +380,7 @@ app.post('/api/template-preview-html', (req, res) => {
 
 app.post('/api/custom-templates', async (req, res) => {
   const { docType, name, overrides } = req.body || {};
-  const ok = ['quote', 'sales', 'invoice', 'salary'];
-  if (!ok.includes(docType)) return res.status(400).json({ error: 'Invalid docType.' });
+  if (!isValidDocType(docType)) return res.status(400).json({ error: 'Invalid docType.' });
   if (!overrides || typeof overrides !== 'object')
     return res.status(400).json({ error: 'Missing overrides.' });
   const id = `tpl_${Date.now().toString(36)}_${randomBytes(3).toString('hex')}`;
@@ -396,8 +404,7 @@ app.post('/api/custom-templates', async (req, res) => {
 
 app.put('/api/custom-templates/:id', async (req, res) => {
   const { docType, name, overrides } = req.body || {};
-  const ok = ['quote', 'sales', 'invoice', 'salary'];
-  if (!ok.includes(docType))
+  if (!isValidDocType(docType))
     return res.status(400).json({ error: 'Invalid docType.' });
   if (!overrides || typeof overrides !== 'object')
     return res.status(400).json({ error: 'Missing overrides.' });
@@ -430,8 +437,7 @@ app.put('/api/custom-templates/:id', async (req, res) => {
 
 app.delete('/api/custom-templates/:id', async (req, res) => {
   const docType = String(req.query.docType || '');
-  const ok = ['quote', 'sales', 'invoice', 'salary'];
-  if (!ok.includes(docType))
+  if (!isValidDocType(docType))
     return res.status(400).json({ error: 'Missing or invalid docType.' });
   if (!/^tpl_[a-zA-Z0-9_-]+$/.test(req.params.id))
     return res.status(400).json({ error: 'Invalid template id.' });

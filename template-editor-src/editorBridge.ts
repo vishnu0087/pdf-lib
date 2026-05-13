@@ -15,9 +15,23 @@ export function normalizeColorForInput(c: unknown, fallback: string): string {
 }
 
 export function sanitizeHtml(html: string): string {
-  return String(html)
+  const stripped = String(html)
     .replace(/<script\b[\s\S]*?<\/script>/gi, '')
     .replace(/<iframe\b[\s\S]*?<\/iframe>/gi, '');
+  /* Editor-only overlay nodes must never reach _liveHtml. DOMParser handles
+     nested attribute quoting correctly where a regex cannot. */
+  if (!/data-editor-only/i.test(stripped)) return stripped;
+  if (typeof DOMParser === 'undefined') return stripped;
+  try {
+    const doc = new DOMParser().parseFromString(stripped, 'text/html');
+    doc.querySelectorAll('[data-editor-only]').forEach((n) => n.parentNode?.removeChild(n));
+    /* Preserve a full-document shape so persistence still detects <html>/</html>. */
+    return /<html[\s>]/i.test(stripped)
+      ? '<!DOCTYPE html>\n' + doc.documentElement.outerHTML
+      : doc.body.innerHTML;
+  } catch {
+    return stripped;
+  }
 }
 
 /** @public for tests */
@@ -301,57 +315,52 @@ export function injectEditorPagedScreenCss(doc: Document | null | undefined): vo
       width: 100% !important;
       min-height: 100% !important;
     }
-    /* Each page is its own stacking context so absolutes cannot paint over the next sheet */
+    /* TRUE per-page A4 sheets. Every .sheet--table sibling is a real fixed-size
+       A4 card with its own background; the repagination engine (repaginateTableSheets)
+       distributes content across as many siblings as needed. */
     .sheet.sheet--letter,
     .sheet.sheet--table {
       width: 210mm;
       max-width: 100%;
-      min-height: 297mm;
-      height: auto !important;
+      height: 297mm !important;
+      max-height: 297mm !important;
+      min-height: 297mm !important;
       margin: 0 !important;
       flex: 0 0 auto;
       box-sizing: border-box !important;
       background-color: #ffffff !important;
-      /* Inline styles may set repeat-y on continuation sheet; PDF uses @page art instead */
       background-repeat: no-repeat !important;
       background-position: top left !important;
+      background-size: 210mm 297mm !important;
+      break-after: page;
+      page-break-after: always;
+      position: relative !important;
+      overflow: hidden !important;
+      display: block;
+      isolation: isolate !important;
       box-shadow:
         0 0 0 1px rgba(0,0,0,0.12),
         0 4px 6px rgba(0,0,0,0.08),
         0 12px 28px rgba(0,0,0,0.18);
-      break-after: page;
-      page-break-after: always;
-      position: relative !important;
-      overflow: visible !important;
-      display: block;
-      isolation: isolate !important;
     }
-    /* Page-break indicators: faint 1px line every 297mm. Matches where Puppeteer will split. */
-    .sheet.sheet--letter::after,
-    .sheet.sheet--table::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background-image: linear-gradient(
-        to bottom,
-        transparent 0,
-        transparent calc(297mm - 1px),
-        rgba(59, 130, 246, 0.55) calc(297mm - 1px),
-        rgba(59, 130, 246, 0.55) 297mm,
-        transparent 297mm
-      );
-      background-size: 100% 297mm;
-      background-repeat: repeat-y;
-      z-index: 3;
+    /* A single image cannot blow past one A4. Repaginate places it on its own sheet. */
+    .sheet--letter img:not(.letter-sheet-bg),
+    .sheet--table img {
+      max-height: 290mm;
+      height: auto;
     }
     .sheet-inner--p1,
     .sheet-inner--p2 {
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: 100%;
+      height: 100%;
+      max-height: 100%;
       box-sizing: border-box;
+      /* Clip transient typing overflow at the safe-area bottom so content never
+         visually paints over the footer artwork band, even before the debounced
+         repagination has moved the overflowing block to the next sheet. */
+      overflow: hidden !important;
       word-wrap: break-word;
       overflow-wrap: break-word;
     }
@@ -392,21 +401,338 @@ export function injectEditorPagedScreenCss(doc: Document | null | undefined): vo
   `.trim();
 }
 
+/** A4 portrait at 96dpi: 297mm * 96 / 25.4 ≈ 1122.52px. Matches Puppeteer's PDF_VIEWPORT.height. */
+const EDITOR_A4_PAGE_HEIGHT_PX = (297 * 96) / 25.4;
+
 /**
- * Estimate page count by dividing each .sheet's rendered height by 297mm (A4).
- * Approximates Puppeteer's print break behavior for the status bar indicator.
+ * Editor-only one-shot: copies the cascaded padding from `.sheet-inner--p1` onto its
+ * parent `.sheet--letter` and zeroes inner padding. After this, both `.sheet--letter`
+ * and `.sheet--table` share the same geometry (section carries padding, inner is the
+ * safe area itself), so `overflow: hidden` on the inner correctly clips at the
+ * footer-band boundary on every page.
+ *
+ * Print-safe: `<img class="letter-sheet-bg">` and the not-approved stamp are both
+ * `position: absolute`, anchored to the section's padding-box, so they don't shift.
+ *
+ * Idempotent: skips sections that already carry an explicit inline `padding`.
  */
+export function shiftPage1PaddingToSection(doc: Document | null | undefined): void {
+  if (!doc) return;
+  const w = (doc.defaultView ?? null) as (Window & typeof globalThis) | null;
+  if (!w) return;
+  const letters = doc.querySelectorAll('section.sheet.sheet--letter');
+  letters.forEach((s) => {
+    const section = s as HTMLElement;
+    const inner = section.querySelector(':scope > .sheet-inner--p1') as HTMLElement | null;
+    if (!inner) return;
+    const existing = (section.style.padding || '').trim();
+    if (existing && existing !== '0' && existing !== '0px') return;
+    try {
+      const cs = w.getComputedStyle(inner);
+      const padT = cs.paddingTop || '0';
+      const padR = cs.paddingRight || '0';
+      const padB = cs.paddingBottom || '0';
+      const padL = cs.paddingLeft || '0';
+      if (padT === '0px' && padR === '0px' && padB === '0px' && padL === '0px') return;
+      section.style.padding = `${padT} ${padR} ${padB} ${padL}`;
+      inner.style.padding = '0';
+    } catch {
+      /* */
+    }
+  });
+}
+
+/** Elements that should be split open when their content overflows. */
+const SPLITTABLE_TAGS = new Set([
+  'div', 'section', 'article', 'main', 'aside', 'ul', 'ol', 'dl', 'tbody',
+]);
+/** Elements treated as atomic (moved whole, never split). */
+const ATOMIC_TAGS = new Set([
+  'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+  'img', 'hr', 'br', 'pre', 'figure', 'blockquote',
+  'tr', 'td', 'th', 'iframe', 'video', 'canvas', 'svg',
+]);
+
+/**
+ * Live multi-page repagination with recursive content fragmentation.
+ *
+ * Distributes content of all `.sheet--table` sections across N real sibling
+ * sections (fixed 297mm A4 cards, `overflow: hidden`, `height: 297mm`). When
+ * a wrapper div (`.p2-quote-line-items-shell`, `.p2-table-wrap`, `.p2-after-table`,
+ * generic `<div>`/`<section>`/`<ul>`/`<ol>`, etc.) overflows the safe area,
+ * the wrapper is cloned across spawned sheets so CSS class context is preserved
+ * for nested children. Tables are split at `<tr>` boundaries with `<thead>` and
+ * `<colgroup>` re-cloned on each new page so column widths and headers persist.
+ *
+ * Caret survival: leaf nodes (text, atomic blocks like `<p>`, `<img>`, rows)
+ * are *moved* via `appendChild` (no clones), so JS node identity is preserved
+ * and any active `Range` endpoint anchored in user-typed text continues to
+ * resolve after re-parenting. Only wrapper containers are cloned (empty).
+ */
+export function repaginateTableSheets(
+  doc: Document | null | undefined
+): { pages: number } {
+  if (!doc?.body) return { pages: 1 };
+  const all = Array.from(
+    doc.querySelectorAll('section.sheet.sheet--table')
+  ) as HTMLElement[];
+  if (all.length === 0) {
+    const letters = doc.querySelectorAll('section.sheet.sheet--letter').length;
+    return { pages: Math.max(1, letters) };
+  }
+
+  const sel = doc.getSelection ? doc.getSelection() : null;
+  let savedRange: Range | null = null;
+  if (sel && sel.rangeCount > 0) {
+    try {
+      savedRange = sel.getRangeAt(0).cloneRange();
+    } catch {
+      savedRange = null;
+    }
+  }
+
+  const template = all[0];
+  const innerSelector = ':scope > .sheet-inner--p2';
+  const templateInner = template.querySelector(innerSelector) as HTMLElement | null;
+  if (!templateInner) return { pages: 1 + all.length };
+
+  const parent = template.parentNode;
+  if (!parent) return { pages: 1 + all.length };
+
+  /* Capture every top-level block across all existing sheets, preserving order. */
+  const topBlocks: ChildNode[] = [];
+  all.forEach((s) => {
+    const innerEl = s.querySelector(innerSelector) as HTMLElement | null;
+    if (!innerEl) return;
+    Array.from(innerEl.childNodes).forEach((n) => topBlocks.push(n));
+  });
+
+  /* Remove sibling sheets and clear the template's inner to redistribute. */
+  for (let i = all.length - 1; i >= 1; i--) parent.removeChild(all[i]);
+  while (templateInner.firstChild) templateInner.removeChild(templateInner.firstChild);
+
+  /* Mutable state shared by the recursive helpers. */
+  let currentSheet: HTMLElement = template;
+  let currentInner: HTMLElement = templateInner;
+  const readUsable = (el: HTMLElement) => {
+    el.getBoundingClientRect();
+    return el.clientHeight || EDITOR_A4_PAGE_HEIGHT_PX;
+  };
+  let usable = readUsable(currentInner);
+
+  const startNewSheet = () => {
+    const newSheet = template.cloneNode(false) as HTMLElement;
+    const newInner = templateInner.cloneNode(false) as HTMLElement;
+    while (newInner.firstChild) newInner.removeChild(newInner.firstChild);
+    newSheet.appendChild(newInner);
+    if (currentSheet.nextSibling) parent.insertBefore(newSheet, currentSheet.nextSibling);
+    else parent.appendChild(newSheet);
+    currentSheet = newSheet;
+    currentInner = newInner;
+    usable = readUsable(currentInner);
+  };
+
+  const fits = () => currentInner.scrollHeight <= usable + 1;
+
+  const isElement = (n: Node): n is HTMLElement => n.nodeType === Node.ELEMENT_NODE;
+  const tagOf = (n: Node) => (isElement(n) ? n.tagName.toLowerCase() : '');
+  const isTable = (n: Node) => tagOf(n) === 'table';
+  const isSplittable = (n: Node) => {
+    if (!isElement(n)) return false;
+    const t = tagOf(n);
+    if (ATOMIC_TAGS.has(t)) return false;
+    return SPLITTABLE_TAGS.has(t);
+  };
+
+  /**
+   * Start a new sheet AND mirror the wrapper chain from currentInner down to
+   * the depth of `slot`, so spawned-page content keeps its CSS class context
+   * (e.g., `.p2-quote-line-items-shell > .p2-table-wrap > …`).
+   */
+  const startNewSheetWithChain = (slot: HTMLElement): HTMLElement => {
+    const chain: HTMLElement[] = [];
+    let n: HTMLElement | null = slot;
+    while (n && n !== currentInner) {
+      chain.unshift(n);
+      n = n.parentElement;
+    }
+    startNewSheet();
+    let parentRef: HTMLElement = currentInner;
+    for (const link of chain) {
+      const clone = link.cloneNode(false) as HTMLElement;
+      while (clone.firstChild) clone.removeChild(clone.firstChild);
+      parentRef.appendChild(clone);
+      parentRef = clone;
+    }
+    return parentRef;
+  };
+
+  /**
+   * Place `node` into `slot`. If overflow, split recursively. Returns the
+   * slot at the same nesting depth where the NEXT sibling should go (may be
+   * a freshly-cloned wrapper on a freshly-spawned sheet).
+   */
+  const placeNode = (node: ChildNode, slot: HTMLElement): HTMLElement => {
+    slot.appendChild(node);
+    if (fits()) return slot;
+
+    /* Overflow. Pull node back and pick a split strategy. */
+    slot.removeChild(node);
+
+    if (isTable(node)) return splitTable(node as HTMLElement, slot);
+    if (isSplittable(node) && node.childNodes.length > 0) {
+      return splitContainer(node as HTMLElement, slot);
+    }
+
+    /* Atomic leaf. Move to a fresh sheet if the current one already has content. */
+    if (!currentInner.firstChild) {
+      slot.appendChild(node);
+      return slot;
+    }
+    const newSlot = startNewSheetWithChain(slot);
+    newSlot.appendChild(node);
+    return newSlot;
+  };
+
+  /**
+   * Replace `container` (already in slot) with an empty clone, then place each
+   * child of the original container into the clone, splitting across sheets.
+   */
+  const splitContainer = (container: HTMLElement, slot: HTMLElement): HTMLElement => {
+    const children = Array.from(container.childNodes);
+    const empty = container.cloneNode(false) as HTMLElement;
+    while (empty.firstChild) empty.removeChild(empty.firstChild);
+    slot.appendChild(empty);
+
+    /* If even the empty wrapper doesn't fit AND the current sheet has prior
+       content, push the wrapper itself to a new sheet first. */
+    if (!fits() && currentInner.childNodes.length > 1) {
+      slot.removeChild(empty);
+      const nextSlot = startNewSheetWithChain(slot);
+      nextSlot.appendChild(empty);
+      slot = nextSlot;
+    }
+
+    let sub: HTMLElement = empty;
+    for (const child of children) sub = placeNode(child, sub);
+
+    /* Climb back to slot's depth so the caller can place its next sibling. */
+    const slotDepth = depthFrom(slot, currentInner);
+    let result: HTMLElement | null = sub;
+    while (result && depthFrom(result, currentInner) > slotDepth) {
+      result = result.parentElement;
+    }
+    return result || slot;
+  };
+
+  /** Distance from `node` up to `ancestor` (exclusive). Returns -1 if not nested. */
+  function depthFrom(node: HTMLElement, ancestor: HTMLElement): number {
+    let d = 0;
+    let n: HTMLElement | null = node;
+    while (n && n !== ancestor) {
+      n = n.parentElement;
+      d++;
+    }
+    return n === ancestor ? d : -1;
+  }
+
+  /**
+   * Split a `<table>` at `<tr>` boundaries. Builds a fresh empty clone of the
+   * table on each new sheet, copying `<caption>`, `<colgroup>`, and `<thead>`
+   * deep so column widths and header rows persist across the print spread.
+   */
+  const splitTable = (table: HTMLElement, slot: HTMLElement): HTMLElement => {
+    const tbody = table.querySelector(':scope > tbody') as HTMLElement | null;
+    if (!tbody || tbody.children.length === 0) {
+      /* No tbody (or empty) — treat as atomic. */
+      if (!currentInner.firstChild) {
+        slot.appendChild(table);
+        return slot;
+      }
+      const onlySlot = startNewSheetWithChain(slot);
+      onlySlot.appendChild(table);
+      return onlySlot;
+    }
+    const rows = Array.from(tbody.children) as HTMLElement[];
+
+    const captionEl = table.querySelector(':scope > caption');
+    const colgroupEl = table.querySelector(':scope > colgroup');
+    const theadEl = table.querySelector(':scope > thead');
+    const buildEmptyClone = (): { table: HTMLElement; tbody: HTMLElement } => {
+      const t = table.cloneNode(false) as HTMLElement;
+      if (captionEl) t.appendChild(captionEl.cloneNode(true));
+      if (colgroupEl) t.appendChild(colgroupEl.cloneNode(true));
+      if (theadEl) t.appendChild(theadEl.cloneNode(true));
+      const tb = tbody.cloneNode(false) as HTMLElement;
+      t.appendChild(tb);
+      return { table: t, tbody: tb };
+    };
+
+    let { table: curTable, tbody: curTbody } = buildEmptyClone();
+    slot.appendChild(curTable);
+    if (!fits() && currentInner.childNodes.length > 1) {
+      slot.removeChild(curTable);
+      const next = startNewSheetWithChain(slot);
+      const built = buildEmptyClone();
+      curTable = built.table;
+      curTbody = built.tbody;
+      next.appendChild(curTable);
+      slot = next;
+    }
+
+    for (const row of rows) {
+      curTbody.appendChild(row);
+      if (!fits()) {
+        if (curTbody.children.length === 1) {
+          /* This row alone overflows: leave it and move on to a new sheet for
+             the next row to avoid an infinite empty-table loop. */
+          continue;
+        }
+        curTbody.removeChild(row);
+        const next = startNewSheetWithChain(slot);
+        const built = buildEmptyClone();
+        curTable = built.table;
+        curTbody = built.tbody;
+        next.appendChild(curTable);
+        curTbody.appendChild(row);
+        slot = next;
+      }
+    }
+    return slot;
+  };
+
+  /* Distribute every captured top-level block sequentially. After each block
+     is placed, reset the slot to currentInner so the next top-level block
+     starts a fresh wrapper chain (matching the source structure). */
+  let slot: HTMLElement = currentInner;
+  for (const block of topBlocks) {
+    slot = placeNode(block, slot);
+    slot = currentInner;
+  }
+
+  if (savedRange) {
+    try {
+      const startC = (savedRange.startContainer as Node)?.isConnected;
+      const endC = (savedRange.endContainer as Node)?.isConnected;
+      if (startC && endC && sel) {
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+      }
+    } catch {
+      /* range detached during DOM moves; harmless */
+    }
+  }
+
+  const tableCount = doc.querySelectorAll('section.sheet.sheet--table').length;
+  const letterCount = doc.querySelectorAll('section.sheet.sheet--letter').length;
+  return { pages: Math.max(1, tableCount + letterCount) };
+}
+
+/** Count real `.sheet` siblings in the editor — the status bar source of truth. */
 export function countEditorPages(doc: Document | null | undefined): number {
   if (!doc) return 1;
-  const sheets = doc.querySelectorAll('.sheet');
-  if (!sheets.length) return 1;
-  const pageHeightPx = (297 * 96) / 25.4;
-  let total = 0;
-  sheets.forEach((s) => {
-    const h = (s as HTMLElement).scrollHeight || 0;
-    total += Math.max(1, Math.ceil(h / pageHeightPx));
-  });
-  return Math.max(1, total);
+  const n = doc.querySelectorAll('section.sheet.sheet--letter, section.sheet.sheet--table').length;
+  return Math.max(1, n);
 }
 
 /**
@@ -418,6 +744,7 @@ export function wireTemplateImagesForEditor(doc: Document | null | undefined): v
   doc.body.querySelectorAll('img').forEach((el) => {
     const img = el as HTMLImageElement;
     try {
+      if (img.closest?.('[data-editor-only]')) return;
       if (img.classList.contains('letter-sheet-bg')) {
         img.draggable = false;
         return;
