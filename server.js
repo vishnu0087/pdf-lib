@@ -21,6 +21,7 @@ import {
 } from './lib/pdf-template-customization.js';
 import { substitutePlaceholdersInHtml } from './lib/placeholder-html.js';
 import { prepareLiveHtmlForPdf } from './lib/live-html-pdf-fix.js';
+import { resolveTemplateVariables } from './lib/resolve-template-variables.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -507,7 +508,13 @@ app.post('/api/pdf-generate', async (req, res) => {
   try {
     let buf;
     if (htmlExact) {
-      const merged = substitutePlaceholdersInHtml(htmlExact, data, tokenMap);
+      /* Phase 10: resolve structured variable chips + block wrappers first.
+         Phase 10b: pass the saved tokenMap so chip tokens that aren't in the
+         doc-type registry can fall back to the auto-generated JSON paths.
+         Legacy <TOKEN> text-format substitution runs after as final fallback
+         so older saved templates without Phase 10 markup keep rendering. */
+      const phase10Resolved = resolveTemplateVariables(htmlExact, docType, data, { tokenMap });
+      const merged = substitutePlaceholdersInHtml(phase10Resolved, data, tokenMap);
       buf = await puppeteerHtmlToPdfBuffer(
         prepareLiveHtmlForPdf(merged, listenPort),
         quoteLayout,

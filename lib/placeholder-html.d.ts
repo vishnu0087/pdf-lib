@@ -15,3 +15,10 @@ export function retokenizeEditorLiveHtml(
   previewData: unknown,
   tokenMap: TokenMap | null | undefined
 ): string;
+
+export function chipifyEditorLiveHtml(
+  html: string,
+  previewData: unknown,
+  tokenMap: TokenMap | null | undefined,
+  opts?: { docType?: string; labelFor?: (token: string) => string }
+): string;

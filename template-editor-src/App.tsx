@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Editor as TinyEditor } from 'tinymce';
 import {
   FONT_PT_SIZES,
+  collapseEditorPagedHtmlString,
   countEditorPages,
   injectEditorPagedScreenCss,
   injectPdfHeadIntoEditorDoc,
@@ -11,17 +12,27 @@ import {
   repaginateTableSheets,
   sanitizeHtml,
   shiftPage1PaddingToSection,
+  shiftPage2PaddingToSection,
   splitTemplateHtml,
   type TemplateHtmlParts,
   syncHeadersIntoDraft,
   updateLiveThemeCssFromDraft,
   wireTemplateImagesForEditor,
 } from './editorBridge';
-import { EditorStatusBar, EditorTopBar } from './EditorChrome';
+import { EditorTopBar } from './EditorChrome';
+import { TemplateToolbox } from './TemplateToolbox';
 import {
+  buildBlockVariableHtml,
+  buildFieldHtml,
+  buildVariableHtml,
+  type FieldType,
+} from './templateFields';
+import {
+  chipifyEditorLiveHtml,
   retokenizeEditorLiveHtml,
   substitutePlaceholdersInHtml,
 } from '../lib/placeholder-html.js';
+import { chipifyQuoteEditorHtml } from '../lib/quote-semantic-chips.js';
 
 function readBootstrap(): null | {
   docType: string;
@@ -52,17 +63,30 @@ export default function App() {
   const [initialBody, setInitialBody] = useState<string | null>(null);
   const [pageCount, setPageCount] = useState(1);
   const [dirty, setDirty] = useState(false);
+  const [tokenMap, setTokenMap] = useState<Record<string, string[]>>({});
   const [saving, setSaving] = useState(false);
   const [templateName, setTemplateName] = useState('New template');
 
+  /* Phase 8: restored single-pane paginated editor. The splitter runs against
+     the live edit doc (Phases 1–6 fixes are still in place), with three new
+     guards to reduce keystroke pressure: longer debounce, skip during IME
+     composition, skip when content length is unchanged. */
   const resizeObsRef = useRef<ResizeObserver | null>(null);
   const repaginateDebRef = useRef<number | null>(null);
+  const isComposingRef = useRef(false);
+  const lastContentLengthRef = useRef(-1);
 
   const runRepaginate = useCallback(() => {
     const ed = editorRef.current;
     if (!ed) return;
+    /* Guard 2: never mutate the DOM while the OS is mid-IME composition. */
+    if (isComposingRef.current) return;
     const doc = ed.getDoc();
-    if (!doc) return;
+    if (!doc?.body) return;
+    /* Guard 3: short-circuit if content length hasn't changed since the
+       last successful run (ResizeObserver fires can be spurious). */
+    const len = doc.body.innerHTML.length;
+    if (len === lastContentLengthRef.current) return;
     const um = (ed as unknown as { undoManager?: { transact?: (cb: () => void) => void } })
       .undoManager;
     const work = () => {
@@ -78,7 +102,9 @@ export default function App() {
     } catch {
       work();
     }
+    /* Refresh AFTER pagination so the next run sees the post-split length. */
     try {
+      lastContentLengthRef.current = doc.body.innerHTML.length;
       setPageCount(countEditorPages(doc));
     } catch {
       /* */
@@ -87,10 +113,12 @@ export default function App() {
 
   const scheduleRepaginate = useCallback(() => {
     if (repaginateDebRef.current != null) window.clearTimeout(repaginateDebRef.current);
+    /* Guard 1: 600ms idle window (was 250ms). Sustained typing no longer
+       interrupts the user mid-burst with caret-jumping DOM mutations. */
     repaginateDebRef.current = window.setTimeout(() => {
       repaginateDebRef.current = null;
       runRepaginate();
-    }, 250);
+    }, 600);
   }, [runRepaginate]);
 
   const recomputePages = useCallback(() => {
@@ -120,7 +148,11 @@ export default function App() {
       snapTm.current = null;
       const inner = ed.getContent();
       const full = mergeTemplateHtml({ ...parts, bodyInner: inner });
-      persistLiveHtmlString(full, docType, snapshotRef.current);
+      /* Collapse editor's transient pagination splits before persisting so the
+         saved HTML matches a fresh template render — Puppeteer paginates it
+         natively, immune to editor splitter state. */
+      const canonical = collapseEditorPagedHtmlString(full);
+      persistLiveHtmlString(canonical, docType, snapshotRef.current);
       recomputePages();
     }, 400);
   }, [docType, recomputePages]);
@@ -131,7 +163,8 @@ export default function App() {
     if (!ed || !parts) return;
     const inner = ed.getContent();
     const full = mergeTemplateHtml({ ...parts, bodyInner: inner });
-    persistLiveHtmlString(full, docType, snapshotRef.current);
+    const canonical = collapseEditorPagedHtmlString(full);
+    persistLiveHtmlString(canonical, docType, snapshotRef.current);
   }, [docType]);
 
   useEffect(() => {
@@ -203,6 +236,7 @@ export default function App() {
       snapshotRef.current = baseData;
 
       let html = '';
+      let loadedSavedLiveHtml = false;
 
       const pick =
         typeof b.templatePick === 'string' && String(b.templatePick).trim() !== ''
@@ -226,6 +260,7 @@ export default function App() {
             if (liveOk) {
               setDraft({ ...disk.overrides });
               html = String(liveRaw);
+              loadedSavedLiveHtml = true;
               const tm = disk.overrides._placeholderTokenMap;
               if (tm && typeof tm === 'object') {
                 try {
@@ -310,7 +345,49 @@ export default function App() {
 
       const parts = splitTemplateHtml(html);
       templatePartsRef.current = parts;
-      setInitialBody(parts.bodyInner);
+      /* Phase 10b: pull the freshest tokenMap from localStorage (the boot
+         paths above store the per-doc-type map there) and push it to state
+         so the toolbox can list available chip tokens. */
+      const currentTokenMap: Record<string, string[]> = (() => {
+        try {
+          const t = localStorage.getItem('pdfEditorTokenMap');
+          if (!t) return {};
+          const p = JSON.parse(t) as { docType?: string; tokenMap?: unknown };
+          if (
+            p.docType === b.docType &&
+            p.tokenMap && typeof p.tokenMap === 'object' && !Array.isArray(p.tokenMap)
+          ) {
+            return p.tokenMap as Record<string, string[]>;
+          }
+        } catch { /* */ }
+        return {};
+      })();
+      setTokenMap(currentTokenMap);
+      /* Phase 10c: when no saved _liveHtml was loaded, transform the freshly
+         rendered fixture HTML in-place — only runtime data values become
+         semantic chips. The full document layout (header art, tables, totals,
+         terms, bank details, footer art) stays exactly as rendered.
+         Quote uses the curated semantic chipifier (semantic chip names,
+         per-cell line-items chips with row/col metadata). Other doc types
+         fall back to the generic tokenMap-driven chipifier. */
+      let bodyInner = parts.bodyInner;
+      if (!loadedSavedLiveHtml && baseData) {
+        try {
+          if (b.docType === 'quote') {
+            bodyInner = chipifyQuoteEditorHtml(bodyInner, baseData);
+          } else {
+            bodyInner = chipifyEditorLiveHtml(
+              bodyInner,
+              baseData,
+              currentTokenMap,
+              { docType: b.docType }
+            );
+          }
+        } catch {
+          /* on transform error, fall back to the un-chipified HTML */
+        }
+      }
+      setInitialBody(bodyInner);
       setBusy(false);
     }
 
@@ -347,6 +424,41 @@ export default function App() {
     return null;
   }
 
+  const handleInsertField = useCallback((type: FieldType) => {
+    const ed = editorRef.current;
+    if (!ed) return;
+    try {
+      ed.focus();
+      ed.insertContent(buildFieldHtml(type));
+      /* The existing scheduleSnapshot + scheduleRepaginate subscriptions on
+         SetContent fire automatically — no manual trigger needed. */
+    } catch {
+      /* */
+    }
+  }, []);
+
+  const handleInsertVariable = useCallback((token: string, label: string) => {
+    const ed = editorRef.current;
+    if (!ed) return;
+    try {
+      ed.focus();
+      ed.insertContent(buildVariableHtml(token, label));
+    } catch {
+      /* */
+    }
+  }, []);
+
+  const handleInsertBlock = useCallback((id: string, label: string) => {
+    const ed = editorRef.current;
+    if (!ed) return;
+    try {
+      ed.focus();
+      ed.insertContent(buildBlockVariableHtml(id, label));
+    } catch {
+      /* */
+    }
+  }, []);
+
   async function handleSaveTemplate() {
     const ed = editorRef.current;
     const parts = templatePartsRef.current;
@@ -363,9 +475,9 @@ export default function App() {
       saveName = String(p).trim();
     }
 
-    /* One final synchronous repagination so the persisted DOM matches what the
-       user sees. The live DOM is already multi-sheet, so getContent() now emits
-       all <section class="sheet--table"> siblings. */
+    /* One final synchronous repagination so the persisted DOM matches what
+       the user sees. collapseEditorPagedHtmlString below then canonicalizes
+       it for storage (Phase 5 safety net). */
     try {
       repaginateTableSheets(ed.getDoc());
     } catch {
@@ -387,7 +499,10 @@ export default function App() {
     const overrides = JSON.parse(
       JSON.stringify(next)
     ) as Record<string, unknown>;
-    overrides._liveHtml = sanitizeHtml(fullHtml);
+    /* Phase 5: collapse the editor's transient pagination splits before
+       persisting so the saved _liveHtml is canonical (matches a fresh
+       template render). Puppeteer paginates it natively. */
+    overrides._liveHtml = sanitizeHtml(collapseEditorPagedHtmlString(fullHtml));
 
     try {
       const tStored = readTokenMapFromStorage();
@@ -449,11 +564,17 @@ export default function App() {
       const parts = templatePartsRef.current;
       const doc = editor.getDoc();
       if (parts?.prefix) injectPdfHeadIntoEditorDoc(doc, parts.prefix);
+      /* Phase 8: restored paged screen CSS — visible A4 pages while editing. */
       injectEditorPagedScreenCss(doc);
       /* Must run after template head + editor CSS are in the cascade so
          getComputedStyle returns the template's real padding before we override. */
       try {
         shiftPage1PaddingToSection(doc);
+      } catch {
+        /* */
+      }
+      try {
+        shiftPage2PaddingToSection(doc);
       } catch {
         /* */
       }
@@ -468,6 +589,7 @@ export default function App() {
       /* Initial repagination splits the single .sheet--table into real A4 siblings. */
       try {
         repaginateTableSheets(doc);
+        lastContentLengthRef.current = doc.body?.innerHTML.length ?? -1;
         setPageCount(countEditorPages(doc));
       } catch {
         /* */
@@ -480,6 +602,14 @@ export default function App() {
         'input keyup SetContent Undo Redo ExecCommand ObjectResized',
         scheduleRepaginate
       );
+      /* Guard 2 wiring: IME composition events. */
+      editor.on('compositionstart', () => {
+        isComposingRef.current = true;
+      });
+      editor.on('compositionend', () => {
+        isComposingRef.current = false;
+        scheduleRepaginate();
+      });
       editor.on('SetContent Undo Redo', wireImgs);
       editor.on('keydown', (e) => {
         const ev = e as KeyboardEvent;
@@ -538,12 +668,12 @@ export default function App() {
 
   if (busy || initialBody === null) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#525659] text-white">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-neutral-200 text-neutral-700">
         <svg className="h-8 w-8 animate-spin" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
           <path d="M4 12a8 8 0 0 1 8-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
         </svg>
-        <p className="text-sm text-neutral-200">Loading template…</p>
+        <p className="text-sm text-neutral-600">Loading template…</p>
       </div>
     );
   }
@@ -560,19 +690,16 @@ export default function App() {
   const fsList = FONT_PT_SIZES.map((n) => `${n}pt`).join(' ');
 
   return (
-    <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-[#525659] text-[13px] text-neutral-800">
+    <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-neutral-200 text-[13px] text-neutral-800">
       <EditorTopBar
-        templateName={templateName}
-        docType={docType}
-        pageCount={pageCount}
-        dirty={dirty}
         saving={saving}
         onSave={handleSaveTemplate}
         onClose={() => window.close()}
       />
 
-      <div className="relative flex-1 min-h-0 overflow-auto">
-        <Editor
+      <div className="relative flex-1 min-h-0 flex">
+        <div className="relative flex-1 min-w-0 overflow-auto">
+          <Editor
           key={`${docType}-tpl`}
           tinymceScriptSrc={`${import.meta.env.BASE_URL}tinymce/tinymce.min.js`}
           licenseKey="gpl"
@@ -664,9 +791,16 @@ export default function App() {
           }}
           onInit={onEditorInit}
         />
+        </div>
+        <TemplateToolbox
+          docType={docType}
+          tokenMap={tokenMap}
+          onInsertField={handleInsertField}
+          onInsertVariable={handleInsertVariable}
+          onInsertBlock={handleInsertBlock}
+        />
       </div>
 
-      <EditorStatusBar pageCount={pageCount} dirty={dirty} docType={docType} />
     </div>
   );
 }

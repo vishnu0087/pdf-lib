@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import React, { type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { TEMPLATE_FIELD_CSS } from '../lib/template-field-styles.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -193,6 +194,9 @@ function PdfDocumentShell({
           href={`${baseUrl}/fontsource/montserrat/latin-700.css`}
         />
         <style dangerouslySetInnerHTML={{ __html: printCss }} />
+        {/* Phase 9: toolbox field styles — identical to the editor preview's
+            injected CSS so editor and PDF render fields the same. */}
+        <style dangerouslySetInnerHTML={{ __html: TEMPLATE_FIELD_CSS }} />
         <style dangerouslySetInnerHTML={{ __html: printWatermarkCss }} />
         {dyn}
       </head>
