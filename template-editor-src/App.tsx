@@ -1,44 +1,32 @@
-import { Editor } from '@tinymce/tinymce-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Editor as TinyEditor } from 'tinymce';
 import {
-  FONT_PT_SIZES,
-  collapseEditorPagedHtmlString,
+  A4_WIDTH_PX,
+  attachSelectedElementHighlighter,
   countEditorPages,
-  injectEditorPagedScreenCss,
-  injectPdfHeadIntoEditorDoc,
-  mergeTemplateHtml,
-  persistLiveHtmlString,
+  injectEditorChromeCss,
+  insertHtmlAtIframeCaret,
   repaginateTableSheets,
-  sanitizeHtml,
-  shiftPage1PaddingToSection,
-  shiftPage2PaddingToSection,
-  splitTemplateHtml,
-  type TemplateHtmlParts,
-  syncHeadersIntoDraft,
-  updateLiveThemeCssFromDraft,
-  wireTemplateImagesForEditor,
+  selectAllText,
+  waitForLoadComplete,
 } from './editorBridge';
-import { EditorTopBar } from './EditorChrome';
-import { TemplateToolbox } from './TemplateToolbox';
+import { Toolbox } from './toolbox/Toolbox';
 import {
-  buildBlockVariableHtml,
   buildFieldHtml,
-  buildVariableHtml,
+  PLACEHOLDER_TEXT,
   type FieldType,
-} from './templateFields';
-import {
-  chipifyEditorLiveHtml,
-  retokenizeEditorLiveHtml,
-  substitutePlaceholdersInHtml,
-} from '../lib/placeholder-html.js';
-import { chipifyQuoteEditorHtml } from '../lib/quote-semantic-chips.js';
+} from './toolbox/fields';
+import { FloatingToolbar } from './editor/FloatingToolbar';
 
-function readBootstrap(): null | {
+const SIDEBAR_WIDTH_PX = 280;
+const HEADER_HEIGHT_PX = 48;
+
+interface Bootstrap {
   docType: string;
   data?: unknown;
   templatePick?: string;
-} {
+}
+
+function readBootstrap(): Bootstrap | null {
   try {
     const raw = localStorage.getItem('pdfTemplateEditorBootstrap');
     if (!raw) return null;
@@ -49,346 +37,95 @@ function readBootstrap(): null | {
 }
 
 export default function App() {
-  const editorRef = useRef<TinyEditor | null>(null);
-  const templatePartsRef = useRef<TemplateHtmlParts | null>(null);
-  /** When set, Save updates this template instead of creating a new one */
-  const editingTemplateIdRef = useRef<string | null>(null);
-  const editingTemplateNameRef = useRef<string | null>(null);
-  const snapTm = useRef<number | null>(null);
-
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const detachHighlighterRef = useRef<(() => void) | null>(null);
+  const [busy, setBusy] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [docType, setDocType] = useState('');
-  const [draft, setDraft] = useState<Record<string, unknown>>({});
-  const [busy, setBusy] = useState(true);
-  const [initialBody, setInitialBody] = useState<string | null>(null);
+  const [html, setHtml] = useState<string | null>(null);
+  const [docHeight, setDocHeight] = useState(1123);
+  const [iframeReady, setIframeReady] = useState(false);
   const [pageCount, setPageCount] = useState(1);
-  const [dirty, setDirty] = useState(false);
-  const [tokenMap, setTokenMap] = useState<Record<string, string[]>>({});
-  const [saving, setSaving] = useState(false);
-  const [templateName, setTemplateName] = useState('New template');
+  /** True only after the first pagination pass is committed. Keeps the
+   *  iframe hidden during the pre-paginate → paginated transition so the
+   *  user never sees a flash of unpaginated content. */
+  const [paginated, setPaginated] = useState(false);
+  /** Short-lived flag while Refresh-layout is reflowing. Disables the
+   *  refresh button + dims the iframe so the action feels deliberate. */
+  const [refreshing, setRefreshing] = useState(false);
 
-  /* Phase 8: restored single-pane paginated editor. The splitter runs against
-     the live edit doc (Phases 1–6 fixes are still in place), with three new
-     guards to reduce keystroke pressure: longer debounce, skip during IME
-     composition, skip when content length is unchanged. */
-  const resizeObsRef = useRef<ResizeObserver | null>(null);
-  const repaginateDebRef = useRef<number | null>(null);
-  const isComposingRef = useRef(false);
-  const lastContentLengthRef = useRef(-1);
-
-  const runRepaginate = useCallback(() => {
-    const ed = editorRef.current;
-    if (!ed) return;
-    /* Guard 2: never mutate the DOM while the OS is mid-IME composition. */
-    if (isComposingRef.current) return;
-    const doc = ed.getDoc();
-    if (!doc?.body) return;
-    /* Guard 3: short-circuit if content length hasn't changed since the
-       last successful run (ResizeObserver fires can be spurious). */
-    const len = doc.body.innerHTML.length;
-    if (len === lastContentLengthRef.current) return;
-    const um = (ed as unknown as { undoManager?: { transact?: (cb: () => void) => void } })
-      .undoManager;
-    const work = () => {
-      try {
-        repaginateTableSheets(doc);
-      } catch {
-        /* */
-      }
-    };
-    try {
-      if (um?.transact) um.transact(work);
-      else work();
-    } catch {
-      work();
-    }
-    /* Refresh AFTER pagination so the next run sees the post-split length. */
-    try {
-      lastContentLengthRef.current = doc.body.innerHTML.length;
-      setPageCount(countEditorPages(doc));
-    } catch {
-      /* */
-    }
-  }, []);
-
-  const scheduleRepaginate = useCallback(() => {
-    if (repaginateDebRef.current != null) window.clearTimeout(repaginateDebRef.current);
-    /* Guard 1: 600ms idle window (was 250ms). Sustained typing no longer
-       interrupts the user mid-burst with caret-jumping DOM mutations. */
-    repaginateDebRef.current = window.setTimeout(() => {
-      repaginateDebRef.current = null;
-      runRepaginate();
-    }, 600);
-  }, [runRepaginate]);
-
-  const recomputePages = useCallback(() => {
-    const ed = editorRef.current;
-    if (!ed) return;
-    try {
-      setPageCount(countEditorPages(ed.getDoc()));
-    } catch {
-      /* */
-    }
-  }, []);
-
-  const snapshotRef = useRef<unknown>(null);
-
-  const draftRef = useRef(draft);
-  useEffect(() => {
-    draftRef.current = draft;
-  }, [draft]);
-
-  const scheduleSnapshot = useCallback(() => {
-    const ed = editorRef.current;
-    const parts = templatePartsRef.current;
-    if (!ed || !parts) return;
-    setDirty(true);
-    if (snapTm.current != null) window.clearTimeout(snapTm.current);
-    snapTm.current = window.setTimeout(() => {
-      snapTm.current = null;
-      const inner = ed.getContent();
-      const full = mergeTemplateHtml({ ...parts, bodyInner: inner });
-      /* Collapse editor's transient pagination splits before persisting so the
-         saved HTML matches a fresh template render — Puppeteer paginates it
-         natively, immune to editor splitter state. */
-      const canonical = collapseEditorPagedHtmlString(full);
-      persistLiveHtmlString(canonical, docType, snapshotRef.current);
-      recomputePages();
-    }, 400);
-  }, [docType, recomputePages]);
-
-  const flushSnapshot = useCallback(() => {
-    const ed = editorRef.current;
-    const parts = templatePartsRef.current;
-    if (!ed || !parts) return;
-    const inner = ed.getContent();
-    const full = mergeTemplateHtml({ ...parts, bodyInner: inner });
-    const canonical = collapseEditorPagedHtmlString(full);
-    persistLiveHtmlString(canonical, docType, snapshotRef.current);
-  }, [docType]);
-
+  // -------------------- Boot: fetch React-template HTML --------------------
   useEffect(() => {
     let cancelled = false;
-    async function boot() {
-      editingTemplateIdRef.current = null;
-      editingTemplateNameRef.current = null;
 
+    async function boot() {
       const b = readBootstrap();
       if (!b || typeof b.docType !== 'string') {
-        setError(
-          'Open this editor from the generator: Template → Edit layout.'
-        );
+        setError('Open this page from the generator: Template → Edit layout.');
         setBusy(false);
         return;
       }
       setDocType(b.docType);
 
       let baseData: unknown = b.data;
-      if (baseData != null) {
-        try {
-          localStorage.removeItem('pdfEditorTokenMap');
-        } catch {
-          /* */
-        }
-      }
       if (baseData == null) {
         try {
-          const dr = await fetch(
+          const r = await fetch(
             `/api/placeholder-data?docType=${encodeURIComponent(b.docType)}`
           );
-          const rawPayload = (await dr.json().catch(() => ({}))) as Record<
-            string,
-            unknown
-          >;
-          if (!dr.ok || cancelled) {
+          const payload = (await r.json().catch(() => ({}))) as Record<string, unknown>;
+          if (!r.ok || cancelled) {
             if (!cancelled)
-              setError(
-                ('error' in rawPayload
-                  ? String(rawPayload.error)
-                  : null) || 'Could not load layout preview data.'
-              );
+              setError(String(payload.error || 'Could not load preview data.'));
             setBusy(false);
             return;
           }
-          const tokenMap = rawPayload.tokenMap;
-          const pdfPayload = { ...rawPayload };
+          const pdfPayload = { ...payload };
           delete pdfPayload.tokenMap;
           baseData = pdfPayload;
-          try {
-            localStorage.setItem(
-              'pdfEditorTokenMap',
-              JSON.stringify({
-                docType: b.docType,
-                tokenMap:
-                  tokenMap && typeof tokenMap === 'object' ? tokenMap : {},
-              })
-            );
-          } catch {
-            /* */
-          }
         } catch {
-          if (!cancelled) setError('Could not load layout preview data.');
+          if (!cancelled) setError('Could not load preview data.');
           setBusy(false);
           return;
         }
       }
 
-      snapshotRef.current = baseData;
-
-      let html = '';
-      let loadedSavedLiveHtml = false;
-
-      const pick =
-        typeof b.templatePick === 'string' && String(b.templatePick).trim() !== ''
-          ? b.templatePick
-          : 'default';
-      if (pick && pick !== 'default') {
-        try {
-          const r = await fetch(
-            `/api/custom-templates/${encodeURIComponent(pick)}?docType=${encodeURIComponent(b.docType)}`
-          );
-          const disk = await r.json();
-          if (r.ok && disk.overrides && typeof disk.overrides === 'object') {
-            editingTemplateIdRef.current = pick;
-            if (typeof disk.name === 'string') {
-              editingTemplateNameRef.current = disk.name;
-              setTemplateName(disk.name);
-            }
-            const liveRaw = disk.overrides._liveHtml;
-            const liveOk =
-              typeof liveRaw === 'string' && String(liveRaw).length > 400;
-            if (liveOk) {
-              setDraft({ ...disk.overrides });
-              html = String(liveRaw);
-              loadedSavedLiveHtml = true;
-              const tm = disk.overrides._placeholderTokenMap;
-              if (tm && typeof tm === 'object') {
-                try {
-                  localStorage.setItem(
-                    'pdfEditorTokenMap',
-                    JSON.stringify({ docType: b.docType, tokenMap: tm })
-                  );
-                } catch {
-                  /* */
-                }
-                html = substitutePlaceholdersInHtml(html, baseData, tm);
-              }
-            } else {
-              const overridesOnly = { ...disk.overrides } as Record<
-                string,
-                unknown
-              >;
-              delete overridesOnly._liveHtml;
-              setDraft(overridesOnly);
-              const pr = await fetch('/api/template-preview-html', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  docType: b.docType,
-                  data: baseData,
-                  overrides: overridesOnly,
-                }),
-              });
-              const jh = await pr.json().catch(() => ({}));
-              if (!pr.ok || cancelled) {
-                if (!cancelled)
-                  setError(jh.error || 'Could not render saved template.');
-                setBusy(false);
-                return;
-              }
-              html = jh.html;
-            }
-          }
-        } catch {
-          /* */
-        }
-      }
-
-      if (!html) {
+      try {
         const ex = await fetch('/api/template-extract', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            docType: b.docType,
-            data: baseData,
-          }),
+          body: JSON.stringify({ docType: b.docType, data: baseData }),
         });
         const jr = await ex.json().catch(() => ({}));
         if (!ex.ok || cancelled) {
-          if (!cancelled)
-            setError(jr.error || 'Could not read template baseline.');
+          if (!cancelled) setError(String(jr.error || 'Could not load template baseline.'));
           setBusy(false);
           return;
         }
-        const ov = jr.overrides || {};
-        setDraft(ov);
+        const overrides = jr.overrides || {};
 
+        // This endpoint runs renderPdfDocumentShellToHtml — the SAME React
+        // template component Puppeteer renders for PDF export. The HTML
+        // returned is the React component tree's static markup.
         const pr = await fetch('/api/template-preview-html', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            docType: b.docType,
-            data: baseData,
-            overrides: ov,
-          }),
+          body: JSON.stringify({ docType: b.docType, data: baseData, overrides }),
         });
         const jh = await pr.json().catch(() => ({}));
         if (!pr.ok || cancelled) {
-          if (!cancelled) setError(jh.error || 'Could not render preview.');
+          if (!cancelled) setError(String(jh.error || 'Could not render preview.'));
           setBusy(false);
           return;
         }
-        html = jh.html;
-      }
-
-      if (cancelled) return;
-
-      const parts = splitTemplateHtml(html);
-      templatePartsRef.current = parts;
-      /* Phase 10b: pull the freshest tokenMap from localStorage (the boot
-         paths above store the per-doc-type map there) and push it to state
-         so the toolbox can list available chip tokens. */
-      const currentTokenMap: Record<string, string[]> = (() => {
-        try {
-          const t = localStorage.getItem('pdfEditorTokenMap');
-          if (!t) return {};
-          const p = JSON.parse(t) as { docType?: string; tokenMap?: unknown };
-          if (
-            p.docType === b.docType &&
-            p.tokenMap && typeof p.tokenMap === 'object' && !Array.isArray(p.tokenMap)
-          ) {
-            return p.tokenMap as Record<string, string[]>;
-          }
-        } catch { /* */ }
-        return {};
-      })();
-      setTokenMap(currentTokenMap);
-      /* Phase 10c: when no saved _liveHtml was loaded, transform the freshly
-         rendered fixture HTML in-place — only runtime data values become
-         semantic chips. The full document layout (header art, tables, totals,
-         terms, bank details, footer art) stays exactly as rendered.
-         Quote uses the curated semantic chipifier (semantic chip names,
-         per-cell line-items chips with row/col metadata). Other doc types
-         fall back to the generic tokenMap-driven chipifier. */
-      let bodyInner = parts.bodyInner;
-      if (!loadedSavedLiveHtml && baseData) {
-        try {
-          if (b.docType === 'quote') {
-            bodyInner = chipifyQuoteEditorHtml(bodyInner, baseData);
-          } else {
-            bodyInner = chipifyEditorLiveHtml(
-              bodyInner,
-              baseData,
-              currentTokenMap,
-              { docType: b.docType }
-            );
-          }
-        } catch {
-          /* on transform error, fall back to the un-chipified HTML */
+        if (!cancelled) {
+          setHtml(jh.html);
+          setBusy(false);
         }
+      } catch {
+        if (!cancelled) setError('Could not render template preview.');
+        setBusy(false);
       }
-      setInitialBody(bodyInner);
-      setBusy(false);
     }
 
     boot();
@@ -397,410 +134,262 @@ export default function App() {
     };
   }, []);
 
+  // -------------------- Mount HTML, emulate print media, enable editing --------------------
   useEffect(() => {
-    const ed = editorRef.current;
-    if (ed) updateLiveThemeCssFromDraft(ed.getDoc(), draft);
-  }, [draft]);
+    if (!html) return;
+    const iframe = iframeRef.current;
+    const doc = iframe?.contentDocument;
+    if (!doc) return;
 
-  function readTokenMapFromStorage(): Record<string, string[]> | null {
     try {
-      const tRaw = localStorage.getItem('pdfEditorTokenMap');
-      if (!tRaw) return null;
-      const parsed = JSON.parse(tRaw) as {
-        docType?: string;
-        tokenMap?: unknown;
-      };
-      if (
-        parsed.docType === docType &&
-        parsed.tokenMap &&
-        typeof parsed.tokenMap === 'object' &&
-        !Array.isArray(parsed.tokenMap)
-      ) {
-        return parsed.tokenMap as Record<string, string[]>;
-      }
+      doc.open();
+      doc.write(html);
+      doc.close();
     } catch {
-      /* */
+      return;
     }
-    return null;
-  }
+    doc.querySelectorAll('script').forEach((s) => s.parentNode?.removeChild(s));
 
-  const handleInsertField = useCallback((type: FieldType) => {
-    const ed = editorRef.current;
-    if (!ed) return;
-    try {
-      ed.focus();
-      ed.insertContent(buildFieldHtml(type));
-      /* The existing scheduleSnapshot + scheduleRepaginate subscriptions on
-         SetContent fire automatically — no manual trigger needed. */
-    } catch {
-      /* */
-    }
-  }, []);
-
-  const handleInsertVariable = useCallback((token: string, label: string) => {
-    const ed = editorRef.current;
-    if (!ed) return;
-    try {
-      ed.focus();
-      ed.insertContent(buildVariableHtml(token, label));
-    } catch {
-      /* */
-    }
-  }, []);
-
-  const handleInsertBlock = useCallback((id: string, label: string) => {
-    const ed = editorRef.current;
-    if (!ed) return;
-    try {
-      ed.focus();
-      ed.insertContent(buildBlockVariableHtml(id, label));
-    } catch {
-      /* */
-    }
-  }, []);
-
-  async function handleSaveTemplate() {
-    const ed = editorRef.current;
-    const parts = templatePartsRef.current;
-    if (!ed || !parts) return;
-
-    const updateId = editingTemplateIdRef.current;
-    let saveName = (editingTemplateNameRef.current || 'My template').trim();
-    if (!updateId) {
-      const p =
-        typeof prompt === 'function'
-          ? prompt('Save template as:', saveName || 'My template')
-          : '';
-      if (p === null || String(p).trim() === '') return;
-      saveName = String(p).trim();
-    }
-
-    /* One final synchronous repagination so the persisted DOM matches what
-       the user sees. collapseEditorPagedHtmlString below then canonicalizes
-       it for storage (Phase 5 safety net). */
-    try {
-      repaginateTableSheets(ed.getDoc());
-    } catch {
-      /* */
-    }
-    const inner = ed.getContent();
-    const fullHtml0 = mergeTemplateHtml({ ...parts, bodyInner: inner });
-    const domDoc = new DOMParser().parseFromString(fullHtml0, 'text/html');
-    let fullHtml = fullHtml0;
-
-    let next = syncHeadersIntoDraft(domDoc, docType, draftRef.current);
-    setDraft(next);
-
-    const tokenMap = readTokenMapFromStorage();
-    const snap = snapshotRef.current;
-    if (tokenMap && snap && typeof snap === 'object')
-      fullHtml = retokenizeEditorLiveHtml(fullHtml, snap, tokenMap);
-
-    const overrides = JSON.parse(
-      JSON.stringify(next)
-    ) as Record<string, unknown>;
-    /* Phase 5: collapse the editor's transient pagination splits before
-       persisting so the saved _liveHtml is canonical (matches a fresh
-       template render). Puppeteer paginates it natively. */
-    overrides._liveHtml = sanitizeHtml(collapseEditorPagedHtmlString(fullHtml));
-
-    try {
-      const tStored = readTokenMapFromStorage();
-      if (tStored) overrides._placeholderTokenMap = tStored;
-    } catch {
-      /* */
-    }
-
-    setSaving(true);
-    try {
-      let res: Response;
-      if (updateId) {
-        res = await fetch(
-          `/api/custom-templates/${encodeURIComponent(updateId)}`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ docType, name: saveName, overrides }),
-          }
-        );
-      } else {
-        res = await fetch('/api/custom-templates', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ docType, name: saveName, overrides }),
-        });
-      }
-      const jr = await res.json();
-      if (!res.ok) throw new Error(jr.error || 'Save failed');
-      editingTemplateNameRef.current = jr.name || saveName;
-      setTemplateName(jr.name || saveName);
-      if (!updateId && jr.id) editingTemplateIdRef.current = String(jr.id);
+    let cancelled = false;
+    let ro: ResizeObserver | null = null;
+    (async () => {
       try {
-        if (window.opener && !window.opener.closed)
-          window.opener.postMessage(
-            { type: 'pdf-template-saved', id: jr.id || updateId },
-            '*'
-          );
+        await waitForLoadComplete(doc);
       } catch {
         /* */
       }
-      alert(
-        updateId
-          ? `Updated template "${jr.name || saveName}".`
-          : `Saved as "${jr.name}". Choose it on step 3 in the wizard.`
-      );
-      flushSnapshot();
-      setDirty(false);
-    } catch (e) {
-      alert(String(e instanceof Error ? e.message : e));
-    } finally {
-      setSaving(false);
-    }
-  }
+      if (cancelled) return;
 
-  const onEditorInit = useCallback(
-    (_evt: unknown, editor: TinyEditor) => {
-      editorRef.current = editor;
-      const parts = templatePartsRef.current;
-      const doc = editor.getDoc();
-      if (parts?.prefix) injectPdfHeadIntoEditorDoc(doc, parts.prefix);
-      /* Phase 8: restored paged screen CSS — visible A4 pages while editing. */
-      injectEditorPagedScreenCss(doc);
-      /* Must run after template head + editor CSS are in the cascade so
-         getComputedStyle returns the template's real padding before we override. */
+      // NOTE: We deliberately do NOT promote @media print rules to apply
+      // on screen. The template's print CSS contains rules that intentionally
+      // strip per-sheet background artwork during PDF rendering (so the
+      // @page rule provides per-page backgrounds instead). Promoting those
+      // rules to screen would erase the artwork in the editor. The break /
+      // pagination rules we actually need are already replicated under
+      // @media all inside EDITOR_CHROME_CSS, so the pagination engine sees
+      // them via getComputedStyle on screen.
+      injectEditorChromeCss(doc);
+
+      // Run the pagination engine ONCE so `.sheet--table` content that
+      // exceeds 297mm is split into additional `.sheet--table` siblings.
+      // Each sibling renders as its own A4 page card. Pagination is NOT
+      // re-run on every keystroke (that was the source of the previous
+      // "content shuffles randomly" feeling) — the user can click the
+      // "Refresh layout" button to re-paginate after edits.
       try {
-        shiftPage1PaddingToSection(doc);
+        const result = repaginateTableSheets(doc);
+        setPageCount(result.pages);
       } catch {
-        /* */
-      }
-      try {
-        shiftPage2PaddingToSection(doc);
-      } catch {
-        /* */
-      }
-      updateLiveThemeCssFromDraft(doc, draftRef.current);
-      const wireImgs = () => wireTemplateImagesForEditor(editor.getDoc());
-      wireImgs();
-      try {
-        doc.execCommand('styleWithCSS', false, 'true');
-      } catch {
-        /* */
-      }
-      /* Initial repagination splits the single .sheet--table into real A4 siblings. */
-      try {
-        repaginateTableSheets(doc);
-        lastContentLengthRef.current = doc.body?.innerHTML.length ?? -1;
         setPageCount(countEditorPages(doc));
+      }
+
+      // Inline editing: same `designMode='on'` mechanism Google Docs uses.
+      try {
+        (doc as Document & { designMode?: string }).designMode = 'on';
       } catch {
         /* */
       }
-      editor.on(
-        'change keyup SetContent Undo Redo ExecCommand ObjectResize',
-        scheduleSnapshot
-      );
-      editor.on(
-        'input keyup SetContent Undo Redo ExecCommand ObjectResized',
-        scheduleRepaginate
-      );
-      /* Guard 2 wiring: IME composition events. */
-      editor.on('compositionstart', () => {
-        isComposingRef.current = true;
-      });
-      editor.on('compositionend', () => {
-        isComposingRef.current = false;
-        scheduleRepaginate();
-      });
-      editor.on('SetContent Undo Redo', wireImgs);
-      editor.on('keydown', (e) => {
-        const ev = e as KeyboardEvent;
-        if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 's')
-          ev.preventDefault();
-      });
-      /* Body height changes (image loads, autoresize) → repaginate. */
-      if (typeof ResizeObserver !== 'undefined' && doc.body) {
-        const obs = new ResizeObserver(() => {
-          scheduleRepaginate();
+      doc.body
+        ?.querySelectorAll('img')
+        .forEach((img) => {
+          (img as HTMLImageElement).draggable = false;
+          (img as HTMLImageElement).contentEditable = 'false';
         });
-        obs.observe(doc.body);
-        resizeObsRef.current = obs;
-      }
-      editor.on('remove', () => {
-        try {
-          resizeObsRef.current?.disconnect();
-        } catch {
-          /* */
-        }
-        resizeObsRef.current = null;
-        if (repaginateDebRef.current != null) {
-          window.clearTimeout(repaginateDebRef.current);
-          repaginateDebRef.current = null;
-        }
-      });
-      flushSnapshot();
-      window.setTimeout(recomputePages, 100);
-    },
-    [flushSnapshot, scheduleSnapshot, scheduleRepaginate, recomputePages]
-  );
 
+      // Highlight the caret's current `.tpl-field` ancestor so users see a
+      // soft outline around the block they're editing.
+      detachHighlighterRef.current = attachSelectedElementHighlighter(doc);
+
+      const measure = () => {
+        const h = Math.max(
+          doc.documentElement.scrollHeight,
+          doc.body.scrollHeight
+        );
+        setDocHeight(h);
+      };
+      measure();
+      ro = new ResizeObserver(measure);
+      ro.observe(doc.body);
+      setIframeReady(true);
+      // Reveal the iframe AFTER pagination + highlighter are in place so
+      // the user never sees a flash of unpaginated content.
+      setPaginated(true);
+    })();
+
+    return () => {
+      cancelled = true;
+      ro?.disconnect();
+      detachHighlighterRef.current?.();
+      detachHighlighterRef.current = null;
+      setIframeReady(false);
+      setPaginated(false);
+    };
+  }, [html]);
+
+  // -------------------- Refresh layout (re-paginate after edits) --------------------
+  const handleRefreshLayout = useCallback(() => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc || refreshing) return;
+    setRefreshing(true);
+    // Defer pagination one rAF so the "Refreshing…" UI paints first; the
+    // synchronous DOM mutation otherwise blocks visual feedback.
+    requestAnimationFrame(() => {
+      try {
+        const result = repaginateTableSheets(doc);
+        setPageCount(result.pages);
+      } catch {
+        setPageCount(countEditorPages(doc));
+      } finally {
+        // Brief delay so the dim-then-settle animation is perceptible
+        // even on fast machines.
+        window.setTimeout(() => setRefreshing(false), 120);
+      }
+    });
+  }, [refreshing]);
+
+  // -------------------- Toolbox insertion --------------------
+  const handleInsert = useCallback((type: FieldType) => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) return;
+    const node = insertHtmlAtIframeCaret(doc, buildFieldHtml(type));
+    if (!node) return;
+    if (PLACEHOLDER_TEXT[type]) selectAllText(doc, node);
+  }, []);
+
+  // -------------------- Render --------------------
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-50 px-4 text-center text-neutral-700">
-        <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-600">
-            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="2">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+        <div className="rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
+          <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-600">
+            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <circle cx="12" cy="12" r="10" />
               <path d="M12 8v4M12 16h.01" strokeLinecap="round" />
             </svg>
           </div>
-          <h1 className="text-lg font-semibold text-neutral-900">Could not load the editor</h1>
-          <p className="mt-2 max-w-md text-sm text-neutral-600">{error}</p>
+          <h1 className="text-base font-semibold text-slate-900">Could not load preview</h1>
+          <p className="mt-2 max-w-sm text-[13px] text-slate-600">{error}</p>
           <button
             type="button"
-            className="mt-6 rounded-md bg-neutral-900 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-neutral-800"
             onClick={() => window.close()}
+            className="mt-6 rounded-md bg-slate-900 px-5 py-2 text-[12px] font-semibold text-white shadow-sm hover:bg-slate-800"
           >
-            Close tab
+            Close
           </button>
         </div>
       </div>
     );
   }
 
-  if (busy || initialBody === null) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-neutral-200 text-neutral-700">
-        <svg className="h-8 w-8 animate-spin" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
-          <path d="M4 12a8 8 0 0 1 8-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-        </svg>
-        <p className="text-sm text-neutral-600">Loading template…</p>
-      </div>
-    );
-  }
-
-  const ffList = [
-    'Montserrat=Montserrat',
-    'Segoe UI=Segoe UI',
-    'Times New Roman=Times New Roman',
-    'Arial=Arial',
-    'Calibri=Calibri',
-    'Georgia=Georgia',
-  ].join('; ');
-
-  const fsList = FONT_PT_SIZES.map((n) => `${n}pt`).join(' ');
-
   return (
-    <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-neutral-200 text-[13px] text-neutral-800">
-      <EditorTopBar
-        saving={saving}
-        onSave={handleSaveTemplate}
-        onClose={() => window.close()}
-      />
-
-      <div className="relative flex-1 min-h-0 flex">
-        <div className="relative flex-1 min-w-0 overflow-auto">
-          <Editor
-          key={`${docType}-tpl`}
-          tinymceScriptSrc={`${import.meta.env.BASE_URL}tinymce/tinymce.min.js`}
-          licenseKey="gpl"
-          initialValue={initialBody}
-          init={{
-            min_height: 620,
-            menubar: false,
-            promotion: false,
-            branding: false,
-            resize: true,
-            statusbar: false,
-            relative_urls: false,
-            remove_script_host: false,
-            convert_urls: false,
-            paste_block_drop: false,
-            verify_html: false,
-            object_resizing: 'img,table',
-            extended_valid_elements:
-              'img[class|src|alt|style|width|height|loading|draggable|id|border|hspace|vspace|align]',
-            image_advtab: true,
-            plugins: [
-              'autoresize',
-              'lists',
-              'link',
-              'image',
-              'charmap',
-              'searchreplace',
-              'table',
-              'quickbars',
-              'nonbreaking',
-            ],
-            toolbar: false,
-            table_toolbar:
-              'tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol | tablecellprops tablerowprops',
-            table_cell_advtab: true,
-            table_row_advtab: true,
-            table_advtab: true,
-            quickbars_selection_toolbar:
-              'alignleft aligncenter alignright alignjustify | bold italic underline strikethrough | ' +
-              'outdent indent | lineheight | forecolor | fontsizeselect fontfamily | ' +
-              'bullist numlist | blocks | nonbreaking | removeformat',
-            quickbars_insert_toolbar: 'quickimage quicktable',
-            font_family_formats: ffList,
-            fontsize_formats: fsList,
-            line_height_formats: '1 1.15 1.2 1.35 1.5 1.75 2',
-            style_formats_merge: true,
-            style_formats: [
-              {
-                title: 'Paragraph spacing',
-                items: [
-                  {
-                    title: 'Tight',
-                    selector: 'p',
-                    styles: {
-                      marginTop: '0.2em',
-                      marginBottom: '0.2em',
-                    },
-                  },
-                  {
-                    title: 'Normal',
-                    selector: 'p',
-                    styles: {
-                      marginTop: '0.5em',
-                      marginBottom: '0.5em',
-                    },
-                  },
-                  {
-                    title: 'Loose',
-                    selector: 'p',
-                    styles: {
-                      marginTop: '1em',
-                      marginBottom: '1em',
-                    },
-                  },
-                  {
-                    title: 'No extra margin',
-                    selector: 'p',
-                    styles: {
-                      marginTop: '0',
-                      marginBottom: '0',
-                    },
-                  },
-                ],
-              },
-            ],
-            content_style:
-              'body { margin: 0; padding: 0; box-sizing: border-box; } p { box-sizing: border-box; } img { max-width: 100%; height: auto; }',
-            autoresize_bottom_margin: 48,
-          }}
-          onInit={onEditorInit}
-        />
+    <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-slate-200 text-slate-900">
+      <header
+        className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4"
+        style={{ height: HEADER_HEIGHT_PX }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 text-white">
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path d="M6 3h9l5 5v13H6z M14 3v6h6" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div className="flex flex-col leading-tight">
+            <span className="text-[13px] font-semibold text-slate-900">Template editor</span>
+            <span className="text-[11px] text-slate-500">
+              {docType ? docType.charAt(0).toUpperCase() + docType.slice(1) : ''}
+              {pageCount > 1 ? ` · ${pageCount} pages` : ' · 1 page'}
+            </span>
+          </div>
         </div>
-        <TemplateToolbox
-          docType={docType}
-          tokenMap={tokenMap}
-          onInsertField={handleInsertField}
-          onInsertVariable={handleInsertVariable}
-          onInsertBlock={handleInsertBlock}
-        />
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={handleRefreshLayout}
+            disabled={refreshing}
+            title="Re-flow content into pages"
+            className={
+              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-medium transition-colors ' +
+              (refreshing
+                ? 'cursor-wait text-slate-400'
+                : 'text-slate-600 hover:bg-slate-100')
+            }
+          >
+            <svg
+              width={13}
+              height={13}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={refreshing ? 'animate-spin' : ''}
+            >
+              <path d="M3 12a9 9 0 0 1 15.36-6.36L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.36 6.36L3 16M3 21v-5h5" />
+            </svg>
+            {refreshing ? 'Refreshing…' : 'Refresh layout'}
+          </button>
+          <button
+            type="button"
+            onClick={() => window.close()}
+            className="rounded-md px-3 py-1.5 text-[12px] font-medium text-slate-600 transition-colors hover:bg-slate-100"
+          >
+            Close
+          </button>
+        </div>
+      </header>
+
+      {/*
+       * Preview area — the iframe renders the SAME React template component
+       * tree Puppeteer uses for PDF export. The iframe is locked to 794px
+       * (Puppeteer's print viewport width) so the template's CSS receives
+       * the same layout context. Inside the iframe, `designMode='on'` makes
+       * every text node inline-editable like Google Docs.
+       */}
+      <div className="relative flex-1 min-h-0 overflow-auto bg-slate-200">
+        {busy || !paginated ? (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-slate-500">
+            <div className="flex items-center gap-2 text-[13px]">
+              <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={3} opacity={0.25} />
+                <path d="M4 12a8 8 0 0 1 8-8" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
+              </svg>
+              {busy ? 'Loading template…' : 'Laying out pages…'}
+            </div>
+          </div>
+        ) : null}
+
+        <div
+          className="mx-auto my-8"
+          style={{ width: A4_WIDTH_PX }}
+        >
+          <iframe
+            ref={iframeRef}
+            title="Template preview"
+            scrolling="no"
+            className={
+              'block border-0 transition-opacity duration-150 ' +
+              (paginated ? 'opacity-100' : 'opacity-0') +
+              (refreshing ? ' opacity-60' : '')
+            }
+            style={{ width: A4_WIDTH_PX, height: docHeight, display: 'block' }}
+          />
+        </div>
       </div>
 
+      {/*
+       * Toolbox sidebar — position:fixed overlay so it cannot affect the
+       * preview's layout. The preview keeps its full available area and the
+       * A4 page sits at its natural geometry regardless of sidebar presence.
+       */}
+      <aside
+        className="fixed bottom-0 right-0 z-20 border-l border-slate-200 bg-white shadow-[-6px_0_16px_rgba(15,23,42,0.06)]"
+        style={{ top: HEADER_HEIGHT_PX, width: SIDEBAR_WIDTH_PX }}
+      >
+        <Toolbox onInsert={handleInsert} />
+      </aside>
+
+      {iframeReady ? <FloatingToolbar iframeRef={iframeRef} /> : null}
     </div>
   );
 }

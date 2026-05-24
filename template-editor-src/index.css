@@ -1,16 +1,14 @@
+@tailwind base;
+@tailwind components;
 @tailwind utilities;
 
-.tox.tox-tinymce {
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.tox .tox-edit-area,
-.tox .tox-edit-area__iframe {
-  background: transparent !important;
-}
-
-.tox .tox-edit-area::before {
-  background: transparent !important;
+@layer base {
+  html,
+  body {
+    background: #f1f5f9;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
 }
